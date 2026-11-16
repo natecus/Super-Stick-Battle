@@ -30,14 +30,15 @@
     "range": 125
   },
   "ultra": {
-    "kind": "spin",
-    "name": "Shadow flurry",
-    "damage": 8,
-    "knockback": 260,
-    "growth": 2.8,
-    "duration": 1.65,
-    "range": 150,
-    "count": 5
+    "kind": "invisibility",
+    "name": "Vanish",
+    "damage": 0,
+    "knockback": 0,
+    "growth": 0,
+    "duration": 0.85,
+    "range": 0,
+    "count": 1,
+    "invisibleDuration": 4.5
   },
   "playable": false,
   "boss": {

@@ -1,16 +1,12 @@
 import { emptyInput, type AttackState, type CharacterDefinition, type Fighter, type FighterId, type GameEvent, type GameMode, type Hazard, type InputFrame, type MatchPhase, type MatchWinner, type Platform, type PlayerId, type Projectile } from './types';
 import { BossBrain } from './boss-ai';
+import { arenas, arenaForBoss, DESK_PLATFORMS, platformsAt, spikeState, type ArenaDefinition, type ArenaId } from './arenas';
 
 export const WIDTH = 1280;
 export const HEIGHT = 640;
 export const STEP = 1 / 120;
 export const PLAYER_COLORS = ['#2865b3', '#d35b48', '#638d2f'] as const;
-export const PLATFORMS: Platform[] = [
-  { x: 225, y: 524, width: 830, main: true },
-  { x: 260, y: 365, width: 205 },
-  { x: 815, y: 365, width: 205 },
-  { x: 530, y: 235, width: 220 },
-];
+export const PLATFORMS: Platform[] = DESK_PLATFORMS;
 const GRAVITY = 1750;
 const BODY_HEIGHT = 93;
 const BODY_RADIUS = 19;
@@ -21,7 +17,7 @@ function createFighter(character: CharacterDefinition, player: FighterId): Fight
   const boss = player === 2 ? character.boss : undefined;
   return {
     player, character, x: player === 0 ? 430 : 850, y: 524, vx: 0, vy: 0,
-    team: player, size: boss?.scale ?? 1, health: boss?.health ?? 0, maxHealth: boss?.health ?? 0, slowed: 0, hovering: 0,
+    team: player, size: boss?.scale ?? 1, health: boss?.health ?? 0, maxHealth: boss?.health ?? 0, slowed: 0, hovering: 0, invisible: 0, arenaHitCooldown: 0,
     facing: player === 0 ? 1 : -1, grounded: true, platform: 0, jumps: 0,
     damage: 0, lives: boss ? 1 : 3, charge: 0, stun: 0, invulnerable: 0, cooldown: 0,
     dropThrough: 0, coyote: 0.09, jumpBuffer: 0, attack: null, respawn: 0, walkTime: 0,
@@ -43,20 +39,38 @@ export class Match {
   private projectileId = 0;
   private brain = new BossBrain();
   private enragedAnnounced = false;
+  private selectedArena = arenas[0];
+  private duelArena: ArenaId = 'notebook';
+  platforms = platformsAt(arenas[0], 0);
+  private previousPlatforms = this.platforms;
 
   constructor(first: CharacterDefinition, second: CharacterDefinition, private bossDefinition?: CharacterDefinition,
     private canSelect: (character: CharacterDefinition) => boolean = character => character.playable !== false && !character.unlock,
-    private canChallenge: (character: CharacterDefinition) => boolean = character => Boolean(character.boss && !character.boss.requires)) {
+    private canChallenge: (character: CharacterDefinition) => boolean = character => Boolean(character.boss && !character.boss.requires),
+    private canSelectArena: (arena: ArenaDefinition) => boolean = arena => !arena.boss) {
     this.fighters = [createFighter(first, 0), createFighter(second, 1)];
   }
 
   get boss(): Fighter | undefined { return this.mode === 'boss' ? this.fighters[2] : undefined; }
   get selectedBoss(): CharacterDefinition | undefined { return this.bossDefinition; }
+  get arena(): ArenaDefinition { return this.selectedArena; }
+  arenaAvailable(arena: ArenaDefinition): boolean {
+    return this.canSelectArena(arena) || this.mode === 'boss' && arena.boss === this.bossDefinition?.id && this.canChallenge(this.bossDefinition!);
+  }
+  selectArena(id: string): boolean {
+    const arena = arenas.find(a => a.id === id);
+    if (this.phase !== 'lobby' || !arena || !this.arenaAvailable(arena)) return false;
+    this.selectedArena = arena;
+    if (this.mode === 'duel') this.duelArena = arena.id;
+    this.lobby();
+    return true;
+  }
   get bossEnraged(): boolean { return Boolean(this.boss && this.boss.health <= this.boss.maxHealth * (this.boss.character.boss?.enrageAt ?? 0.5)); }
 
   setMode(mode: GameMode): boolean {
     if (this.phase !== 'lobby' || (mode === 'boss' && (!this.bossDefinition?.boss || !this.canChallenge(this.bossDefinition)))) return false;
     this.mode = mode;
+    this.selectedArena = mode === 'boss' ? arenaForBoss(this.bossDefinition!.id) : arenas.find(a => a.id === this.duelArena)!;
     this.lobby();
     return true;
   }
@@ -64,11 +78,14 @@ export class Match {
   selectBoss(character: CharacterDefinition): boolean {
     if (this.phase !== 'lobby' || !character.boss || !this.canChallenge(character)) return false;
     this.bossDefinition = character;
+    if (this.mode === 'boss') this.selectedArena = arenaForBoss(character.id);
     this.lobby();
     return true;
   }
 
   private resetFighters() {
+    this.platforms = platformsAt(this.arena, 0);
+    this.previousPlatforms = this.platforms;
     this.fighters = [createFighter(this.fighters[0].character, 0), createFighter(this.fighters[1].character, 1)];
     if (this.mode === 'boss' && this.bossDefinition) {
       this.fighters[0].team = this.fighters[1].team = 0;
@@ -78,14 +95,23 @@ export class Match {
       boss.x = 640;
       this.fighters.push(boss);
     }
+    for (const fighter of this.fighters) this.placeOnFloor(fighter);
     this.brain.reset();
     this.enragedAnnounced = false;
+  }
+
+  private placeOnFloor(f: Fighter) {
+    f.x = this.arena.spawns?.[this.mode][f.player] ?? f.x;
+    const index = this.platforms.findIndex(p => p.main && f.x >= p.x && f.x <= p.x + p.width);
+    if (index >= 0) { f.platform = index; f.y = this.platforms[index].y; }
+    else { f.grounded = false; f.platform = null; }
   }
 
   select(player: PlayerId, character: CharacterDefinition) {
     if (this.phase !== 'lobby' || character.playable === false || !this.canSelect(character)) return;
     this.fighters[player] = createFighter(character, player);
     if (this.mode === 'boss') { this.fighters[player].team = 0; this.fighters[player].x = player === 0 ? 350 : 930; }
+    this.placeOnFloor(this.fighters[player]);
   }
 
   start() {
@@ -130,15 +156,18 @@ export class Match {
       return;
     }
     if (this.phase !== 'playing') return;
+    this.previousPlatforms = this.platforms;
     this.elapsed += dt;
+    this.platforms = platformsAt(this.arena, this.elapsed);
     this.updateHazards(dt);
     const boss = this.boss;
     if (boss && boss.lives > 0 && boss.respawn === 0) {
       boss.charge = Math.min(100, boss.charge + (boss.character.boss?.chargePerSecond ?? 14) * (this.bossEnraged ? 1.45 : 1) * dt);
       if (this.bossEnraged && !this.enragedAnnounced) { this.enragedAnnounced = true; this.event('enrage', boss, 2); }
     }
-    const bossInput = boss ? this.brain.step(boss, this.fighters.slice(0, 2), dt) : emptyInput();
+    const bossInput = boss ? this.brain.step(boss, this.fighters.slice(0, 2), dt, this.platforms) : emptyInput();
     for (const f of this.fighters) this.move(f, f.player === 2 ? bossInput : inputs[f.player], dt);
+    this.updateArenaHazards();
     for (const f of this.fighters) this.updateAttack(f, dt);
     this.updateProjectiles(dt);
     // Resolve both knockouts before choosing a winner, including simultaneous final stocks.
@@ -156,6 +185,7 @@ export class Match {
   }
 
   private event(type: 'jump' | 'land' | 'hit' | 'ko' | 'shot' | 'ultra' | 'enrage', f: Fighter, intensity = 1) {
+    if (f.invisible > 0 && (type === 'jump' || type === 'land' || type === 'enrage')) return;
     this.events.push({ type, x: f.x, y: type === 'jump' || type === 'land' ? f.y : f.y - 45, player: f.player, intensity });
   }
 
@@ -176,6 +206,14 @@ export class Match {
     f.dropThrough = Math.max(0, f.dropThrough - dt);
     f.slowed = Math.max(0, f.slowed - dt);
     f.hovering = Math.max(0, f.hovering - dt);
+    f.invisible = Math.max(0, f.invisible - dt);
+    f.arenaHitCooldown = Math.max(0, f.arenaHitCooldown - dt);
+    // A grounded rider inherits the exact surface displacement before moving independently.
+    const riding = f.grounded ? f.platform : null;
+    if (riding !== null) {
+      f.x += this.platforms[riding].x - this.previousPlatforms[riding].x;
+      f.y += this.platforms[riding].y - this.previousPlatforms[riding].y;
+    }
     f.coyote = f.grounded ? 0.09 : Math.max(0, f.coyote - dt);
     f.jumpBuffer = input.jump ? 0.12 : Math.max(0, f.jumpBuffer - dt);
 
@@ -185,7 +223,7 @@ export class Match {
         * (f.slowed > 0 ? 0.55 : 1) * (f.player === 2 && this.bossEnraged ? 1.18 : 1);
       f.vx = approach(f.vx, direction * speed, (f.grounded ? 2400 : direction ? 1250 : 450) * dt);
       if (direction && !f.attack) f.facing = direction;
-      if (input.down && f.grounded && f.platform !== null && !PLATFORMS[f.platform].main) {
+      if (input.down && f.grounded && f.platform !== null && !this.platforms[f.platform].main && !this.platforms[f.platform].solid) {
         f.dropThrough = 0.22;
         f.grounded = false;
         f.coyote = 0;
@@ -204,13 +242,14 @@ export class Match {
         f.jumpBuffer = 0;
         this.event('jump', f);
       }
-      if (input.ultra && f.charge >= 100 && !f.attack && (f.character.ultra.kind !== 'quake' || f.grounded)) this.beginAttack(f, true);
+      if (input.ultra && f.charge >= 100 && !f.attack && (f.character.ultra.kind !== 'quake' || f.grounded) && !(f.character.ultra.kind === 'invisibility' && f.invisible > 0)) this.beginAttack(f, true);
       else if (input.attack && f.cooldown === 0 && !f.attack) this.beginAttack(f, false);
     } else {
       f.vx *= Math.pow(0.93, dt);
     }
 
     const lastY = f.y;
+    const lastX = f.x;
     const wasGrounded = f.grounded;
     f.vy = Math.min(1100, f.vy + GRAVITY * dt * (input.down && f.vy > 0 ? 1.8 : 1));
     // Boots soften descent without granting invulnerability or unlimited jumps.
@@ -219,12 +258,13 @@ export class Match {
     f.y += f.vy * dt;
     f.grounded = false;
     f.platform = null;
-    if (f.vy >= 0) {
+    {
       // Higher platforms are checked first if a single step crosses multiple surfaces.
-      const surfaces = PLATFORMS.map((p, index) => ({ ...p, index })).sort((a, b) => a.y - b.y);
+      const surfaces = this.platforms.map((p, index) => ({ ...p, index })).sort((a, b) => a.y - b.y);
       for (const p of surfaces) {
-        if (!p.main && f.dropThrough > 0) continue;
-        if (f.x + 13 > p.x && f.x - 13 < p.x + p.width && lastY <= p.y + 0.1 && f.y >= p.y) {
+        if (!p.main && !p.solid && f.dropThrough > 0) continue;
+        const oldTop = riding === p.index ? p.y : this.previousPlatforms[p.index].y;
+        if (f.x + 13 > p.x && f.x - 13 < p.x + p.width && lastY <= oldTop + 0.1 && f.y >= p.y && f.y - lastY >= p.y - oldTop) {
           f.y = p.y;
           f.vy = 0;
           f.grounded = true;
@@ -235,16 +275,61 @@ export class Match {
         }
       }
     }
+    this.resolveSolids(f, lastX, lastY);
     f.walkTime += Math.abs(f.vx) * dt / 37;
+  }
+
+  private resolveSolids(f: Fighter, lastX: number, lastY: number) {
+    const radius = BODY_RADIUS * f.size;
+    const height = BODY_HEIGHT * f.size;
+    this.platforms.forEach((p, index) => {
+      if (!p.solid || f.platform === index) return;
+      const bottom = p.y + (p.height ?? 24);
+      if (f.x + radius <= p.x || f.x - radius >= p.x + p.width || f.y <= p.y || f.y - height >= bottom) return;
+      const old = this.previousPlatforms[index];
+      if (lastY - height >= old.y + (old.height ?? 24) - 0.1 && f.vy < 0) {
+        f.y = bottom + height;
+        f.vy = Math.max(0, f.vy);
+        return;
+      }
+      const side = lastX < old.x + old.width / 2 ? -1 : 1;
+      f.x = side < 0 ? p.x - radius : p.x + p.width + radius;
+      if (f.vx * side < 0) f.vx = 0;
+      if (p.solid === 'clock' && this.canHit(f) && f.arenaHitCooldown === 0) {
+        this.hit(f, null, 0, 420, 1.5, side, true);
+        f.arenaHitCooldown = 0.8;
+      }
+    });
+  }
+
+  private updateArenaHazards() {
+    for (const f of this.fighters) {
+      if (!this.canHit(f)) continue;
+      for (const patch of this.arena.slime ?? []) {
+        const p = this.platforms[patch.platform];
+        if (f.grounded && f.platform === patch.platform && f.x + BODY_RADIUS > p.x + patch.offset && f.x - BODY_RADIUS < p.x + patch.offset + patch.width) {
+          f.slowed = Math.max(f.slowed, 0.6);
+        }
+      }
+      for (const strip of this.arena.spikes ?? []) {
+        const { height } = spikeState(strip, this.elapsed);
+        if (height < 8 || f.arenaHitCooldown > 0) continue;
+        if (f.x + BODY_RADIUS * f.size > strip.x && f.x - BODY_RADIUS * f.size < strip.x + strip.width && f.y >= strip.y - height && f.y - BODY_HEIGHT * f.size < strip.y) {
+          this.hit(f, null, 12, 340, 2, Math.sign(f.x - (strip.x + strip.width / 2)) || 1, true);
+          f.arenaHitCooldown = 0.8;
+        }
+      }
+    }
   }
 
   private beginAttack(f: Fighter, ultra: boolean) {
     const move = ultra ? f.character.ultra : f.character.attack;
-    const target = this.enemies(f).filter(other => this.canHit(other)).sort((a, b) => Math.abs(a.x - f.x) - Math.abs(b.x - f.x))[0] ?? this.enemies(f)[0];
+    const target = this.enemies(f).filter(other => this.canHit(other) && other.invisible === 0).sort((a, b) => Math.abs(a.x - f.x) - Math.abs(b.x - f.x))[0];
     f.attack = { ultra, elapsed: 0, duration: move.duration, fired: 0, facing: f.facing, targetX: target?.x ?? f.x, targetY: target?.y ?? 524, hitTargets: [] };
     f.cooldown = (ultra ? move.duration + (f.player === 2 ? 0.45 : 0.25) : f.character.attack.cooldown) * (f.player === 2 && this.bossEnraged ? 0.8 : 1);
     // Choosing to attack ends respawn protection.
     f.invulnerable = 0;
+    f.invisible = 0;
     if (ultra) {
       f.charge = 0;
       this.event('ultra', f, 2);
@@ -270,18 +355,26 @@ export class Match {
       }
     } else {
       const move = f.character.ultra;
-      if (move.kind === 'heal' || move.kind === 'hover') {
+      if (move.kind === 'heal' || move.kind === 'hover' || move.kind === 'invisibility') {
         if (a.elapsed >= 0.62 && a.fired === 0) {
           a.fired = 1;
           if (move.kind === 'heal') {
             if (f.player === 2) f.health = Math.min(f.maxHealth, f.health + (move.healAmount ?? 0));
             else f.damage = Math.max(0, f.damage - (move.healAmount ?? 0));
+          } else if (move.kind === 'invisibility') {
+            f.invisible = move.invisibleDuration ?? 5;
           } else {
             f.hovering = move.hoverDuration ?? 4;
             f.vy = -380;
             f.grounded = false; f.platform = null; f.coyote = 0;
             f.jumps = Math.max(1, f.jumps);
           }
+        }
+      } else if (move.kind === 'glove-throw') {
+        if (a.elapsed >= 0.26 && a.fired === 0) {
+          a.fired = 1;
+          this.spawnProjectile(f, a, 'glove', 700, 20, move.range / 700, true);
+          this.event('shot', f);
         }
       } else if (move.kind === 'spin') {
         const windup = f.player === 2 ? 0.62 : 0;
@@ -315,11 +408,11 @@ export class Match {
         // A clear windup, followed by a lob toward each live teammate.
         if (a.elapsed >= 0.62 && a.fired === 0) {
           a.fired = 1;
-          for (const target of this.enemies(f).filter(other => other.lives > 0 && other.respawn === 0)) {
+          for (const target of this.enemies(f).filter(other => other.lives > 0 && other.respawn === 0 && other.invisible === 0)) {
             const x = f.x + a.facing * 30;
             const y = f.y - BODY_HEIGHT * f.size * 0.7;
             const flight = 0.7;
-            const targetY = PLATFORMS.filter(p => target.x >= p.x && target.x <= p.x + p.width && p.y >= target.y - 2).sort((a, b) => a.y - b.y)[0]?.y ?? 524;
+            const targetY = this.platforms.filter(p => target.x >= p.x && target.x <= p.x + p.width && p.y >= target.y - 2).sort((a, b) => a.y - b.y)[0]?.y ?? 524;
             this.projectiles.push({ id: this.projectileId++, owner: f.player, x, y,
               vx: (target.x - x) / flight, vy: (targetY - y - 0.5 * 950 * flight * flight) / flight,
               radius: 16, kind: 'slime', damage: move.damage, knockback: move.knockback, growth: move.growth,
@@ -405,7 +498,7 @@ export class Match {
 
   private quake(f: Fighter) {
     if (!f.grounded || f.platform === null) return;
-    const platform = PLATFORMS[f.platform];
+    const platform = this.platforms[f.platform];
     const move = f.character.ultra;
     this.hazards.push({ id: this.projectileId++, owner: f.player, kind: 'quake', x: platform.x + platform.width / 2, y: platform.y, radius: platform.width / 2, life: 0.65, total: 0.65 });
     for (const other of this.enemies(f)) {
@@ -427,13 +520,13 @@ export class Match {
     }
     this.hazards.push({ id: this.projectileId++, owner: p.owner, kind: 'explosion', x: p.x, y: p.y, radius, life: 0.4, total: 0.4 });
     if (p.kind === 'slime') {
-      const ground = PLATFORMS.filter(platform => p.x >= platform.x && p.x <= platform.x + platform.width)
+      const ground = this.platforms.filter(platform => p.x >= platform.x && p.x <= platform.x + platform.width)
         .sort((a, b) => Math.abs(a.y - p.y) - Math.abs(b.y - p.y))[0];
       if (ground) {
         const left = Math.max(ground.x, p.x - radius);
         const right = Math.min(ground.x + ground.width, p.x + radius);
         const duration = p.puddleDuration ?? 4;
-        this.hazards.push({ id: this.projectileId++, owner: p.owner, kind: 'slime', x: (left + right) / 2, y: ground.y, radius: (right - left) / 2, life: duration, total: duration });
+        this.hazards.push({ id: this.projectileId++, owner: p.owner, kind: 'slime', x: (left + right) / 2, y: ground.y, radius: (right - left) / 2, life: duration, total: duration, platform: this.platforms.indexOf(ground), offsetX: (left + right) / 2 - ground.x });
       }
     }
     this.events.push({ type: 'explosion', x: p.x, y: p.y, player: p.owner, intensity: 2 });
@@ -442,6 +535,7 @@ export class Match {
   private updateHazards(dt: number) {
     this.hazards = this.hazards.filter(h => { h.life -= dt; return h.life > 0; });
     for (const h of this.hazards) {
+      if (h.platform !== undefined) { h.x = this.platforms[h.platform].x + (h.offsetX ?? 0); h.y = this.platforms[h.platform].y; }
       if (h.kind !== 'slime') continue;
       const owner = this.fighters[h.owner];
       for (const target of this.enemies(owner)) {
@@ -452,7 +546,8 @@ export class Match {
 
   private canHit(f: Fighter) { return f.lives > 0 && f.respawn === 0 && f.invulnerable === 0; }
 
-  private hit(target: Fighter, attacker: Fighter, damage: number, base: number, growth: number, direction: number, ultra: boolean) {
+  private hit(target: Fighter, attacker: Fighter | null, damage: number, base: number, growth: number, direction: number, ultra: boolean) {
+    target.invisible = 0;
     target.damage = Math.min(999, target.damage + damage);
     const isBoss = target.player === 2;
     if (isBoss) {
@@ -472,8 +567,8 @@ export class Match {
     // Being launched does not restore spent jumps.
     target.jumps = Math.max(1, target.jumps);
     target.coyote = 0;
-    target.charge = Math.min(100, target.charge + damage * 0.75);
-    if (!ultra) attacker.charge = Math.min(100, attacker.charge + damage * 1.25 + 5);
+    if (attacker) target.charge = Math.min(100, target.charge + damage * 0.75);
+    if (!ultra && attacker) attacker.charge = Math.min(100, attacker.charge + damage * 1.25 + 5);
     this.event('hit', target, force / 350);
   }
 
@@ -491,6 +586,8 @@ export class Match {
     f.dropThrough = 0;
     f.slowed = 0;
     f.hovering = 0;
+    f.invisible = 0;
+    f.arenaHitCooldown = 0;
     f.jumpBuffer = 0;
     f.coyote = 0;
     f.grounded = false;

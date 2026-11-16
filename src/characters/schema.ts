@@ -14,7 +14,7 @@ export function validateCharacter(value: unknown, source = 'definition'): Charac
   };
   number(c.order, 'order', 0, 9999);
   if (!c.appearance || !c.stats || !c.attack || !c.ultra) fail(source, 'appearance, stats, attack, and ultra are required');
-  if (!['sword', 'bow', 'staff', 'club', 'boomerang', 'claws', 'blaster', 'none'].includes(c.appearance.weapon)) fail(source, 'unknown appearance.weapon');
+  if (!['sword', 'bow', 'staff', 'club', 'boomerang', 'claws', 'blaster', 'gloves', 'none'].includes(c.appearance.weapon)) fail(source, 'unknown appearance.weapon');
   if (!['smile', 'grin', 'angry', 'slime', 'cheese', 'robot', 'ninja'].includes(c.appearance.face)) fail(source, 'unknown appearance.face');
   if (!/^#[0-9a-f]{6}$/i.test(c.appearance.accent)) fail(source, 'accent must be a six-digit hex color');
   number(c.appearance.headRadius, 'headRadius', 10, 25);
@@ -24,14 +24,15 @@ export function validateCharacter(value: unknown, source = 'definition'): Charac
   number(c.stats.jumpSpeed, 'jumpSpeed', 400, 1000);
   number(c.stats.weight, 'weight', 0.5, 2);
   if (!['melee', 'projectile'].includes(c.attack.kind)) fail(source, 'unknown attack.kind');
-  if (!['spin', 'rain', 'blast', 'quake', 'boomerang-burst', 'slime-bomb', 'heal', 'hover'].includes(c.ultra.kind)) fail(source, 'unknown ultra.kind');
+  if (!['spin', 'rain', 'blast', 'quake', 'boomerang-burst', 'slime-bomb', 'heal', 'hover', 'invisibility', 'glove-throw'].includes(c.ultra.kind)) fail(source, 'unknown ultra.kind');
   for (const move of ['attack', 'ultra'] as const) {
+    const support = move === 'ultra' && ['heal', 'hover', 'invisibility'].includes(c.ultra.kind);
     if (typeof c[move].name !== 'string' || !c[move].name.trim()) fail(source, `${move}.name is required`);
-    number(c[move].damage, `${move}.damage`, 1, 100);
-    number(c[move].knockback, `${move}.knockback`, 1, 1000);
+    number(c[move].damage, `${move}.damage`, support ? 0 : 1, 100);
+    number(c[move].knockback, `${move}.knockback`, support ? 0 : 1, 1000);
     number(c[move].growth, `${move}.growth`, 0, 15);
     number(c[move].duration, `${move}.duration`, 0.1, 5);
-    number(c[move].range, `${move}.range`, 20, 2000);
+    number(c[move].range, `${move}.range`, support ? 0 : 20, 2000);
   }
   number(c.attack.cooldown, 'attack.cooldown', 0.1, 5);
   number(c.attack.windup, 'attack.windup', 0, c.attack.duration - 0.01);
@@ -49,7 +50,9 @@ export function validateCharacter(value: unknown, source = 'definition'): Charac
   if (c.attack.slowDuration !== undefined) number(c.attack.slowDuration, 'attack.slowDuration', 0.1, 5);
   if (c.ultra.kind === 'heal') number(c.ultra.healAmount, 'ultra.healAmount', 1, 100);
   if (c.ultra.kind === 'hover') number(c.ultra.hoverDuration, 'ultra.hoverDuration', 0.1, 10);
-  if (['heal', 'hover'].includes(c.ultra.kind) || c.boss && c.ultra.kind === 'spin') number(c.ultra.duration, 'ultra.duration (including windup)', 0.63, 5);
+  if (c.ultra.kind === 'invisibility') number(c.ultra.invisibleDuration, 'ultra.invisibleDuration', 0.1, 10);
+  if (c.ultra.kind === 'glove-throw') number(c.ultra.duration, 'ultra.duration (including windup)', 0.27, 5);
+  if (['heal', 'hover', 'invisibility'].includes(c.ultra.kind) || c.boss && c.ultra.kind === 'spin') number(c.ultra.duration, 'ultra.duration (including windup)', 0.63, 5);
   if (c.boss) {
     number(c.boss.health, 'boss.health', 100, 3000);
     number(c.boss.scale, 'boss.scale', 1, 2.5);

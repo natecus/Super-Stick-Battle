@@ -2,8 +2,8 @@ export type PlayerId = 0 | 1;
 export type FighterId = PlayerId | 2;
 export type GameMode = 'duel' | 'boss';
 export type MatchWinner = PlayerId | 'team' | 'boss' | null;
-export type Weapon = 'sword' | 'bow' | 'staff' | 'club' | 'boomerang' | 'claws' | 'blaster' | 'none';
-export type ProjectileKind = 'arrow' | 'magic' | 'fireball' | 'boomerang' | 'slime' | 'cheese' | 'laser';
+export type Weapon = 'sword' | 'bow' | 'staff' | 'club' | 'boomerang' | 'claws' | 'blaster' | 'gloves' | 'none';
+export type ProjectileKind = 'arrow' | 'magic' | 'fireball' | 'boomerang' | 'slime' | 'cheese' | 'laser' | 'glove';
 
 export interface CharacterDefinition {
   id: string;
@@ -40,7 +40,7 @@ export interface CharacterDefinition {
     slowDuration?: number;
   };
   ultra: {
-    kind: 'spin' | 'rain' | 'blast' | 'quake' | 'boomerang-burst' | 'slime-bomb' | 'heal' | 'hover';
+    kind: 'spin' | 'rain' | 'blast' | 'quake' | 'boomerang-burst' | 'slime-bomb' | 'heal' | 'hover' | 'invisibility' | 'glove-throw';
     name: string;
     damage: number;
     knockback: number;
@@ -52,6 +52,7 @@ export interface CharacterDefinition {
     puddleDuration?: number;
     healAmount?: number;
     hoverDuration?: number;
+    invisibleDuration?: number;
   };
 }
 
@@ -85,6 +86,8 @@ export interface Fighter {
   maxHealth: number;
   slowed: number;
   hovering: number;
+  invisible: number;
+  arenaHitCooldown: number;
   character: CharacterDefinition;
   x: number;
   y: number;
@@ -108,7 +111,7 @@ export interface Fighter {
   walkTime: number;
 }
 
-export interface Platform { x: number; y: number; width: number; main?: boolean }
+export interface Platform { x: number; y: number; width: number; main?: boolean; height?: number; solid?: 'clock' | 'wall' }
 
 export interface Projectile {
   id: number;
@@ -143,6 +146,8 @@ export interface Hazard {
   radius: number;
   life: number;
   total: number;
+  platform?: number;
+  offsetX?: number;
 }
 
 export type GameEvent =

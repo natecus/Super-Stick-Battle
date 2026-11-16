@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import './style.css';
 import { bosses, characters } from './characters';
 import { drawCharacter } from './game/drawing';
+import { arenas, arenaForBoss, platformsAt } from './game/arenas';
+import { drawArenaBackground, drawArenaPlatforms } from './game/arena-drawing';
 import { KeyboardInput } from './game/input';
 import { SketchAudio } from './game/audio';
 import { NotebookScene } from './game/scene';
@@ -43,7 +45,12 @@ app.innerHTML = `
     <section class="boss-ladder" id="boss-ladder" aria-labelledby="boss-ladder-title" hidden>
       <div class="ladder-heading"><strong id="boss-ladder-title">THE BOSS LADDER</strong><span id="ladder-progress"></span></div>
       <div class="boss-choices" role="group" aria-label="Choose a boss">${bosses.map((boss, index) => `<button class="boss-choice" data-boss="${escape(boss.id)}" aria-pressed="false" style="--accent:${boss.appearance.accent}"><span class="boss-number">0${index + 1}</span><strong>${escape(boss.name)}</strong><small data-boss-status></small></button>`).join('')}</div>
-      <p>Win to recruit that fighter for both players and open the next challenge.</p>
+      <p>Win to recruit that fighter, unlock their arena, and open the next challenge.</p>
+    </section>
+    <section class="arena-picker" aria-labelledby="arena-picker-title">
+      <div class="ladder-heading"><strong id="arena-picker-title">CHOOSE YOUR ARENA</strong><span id="arena-progress"></span></div>
+      <div class="arena-choices" role="group" aria-label="Choose an arena">${arenas.map(arena => `<button class="arena-choice" data-arena="${arena.id}" aria-pressed="false" style="--accent:${arena.accent}"><canvas width="256" height="128" data-arena-preview="${arena.id}" aria-hidden="true"></canvas><strong>${arena.name}</strong><small data-arena-status></small></button>`).join('')}</div>
+      <p id="arena-description"></p>
     </section>
     <section class="battle-section" aria-label="Battle arena">
       <div class="arena-topline"><span><i class="scribble-dot"></i> <span id="arena-title">DESK DUEL</span> <span class="arena-index">/ ARENA 01</span></span><span class="arena-rules" id="arena-rules">3 LIVES <b>·</b> DOUBLE JUMP <b>·</b> ULTRA MOVES</span></div>
@@ -94,21 +101,38 @@ app.innerHTML = `
 
 const get = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id)! as T;
 const match = new Match(playableCharacters[0], playableCharacters[1] ?? playableCharacters[0], initialBoss,
-  character => progression.canSelect(character), boss => progression.canChallenge(boss));
+  character => progression.canSelect(character), boss => progression.canChallenge(boss), arena => progression.canSelectArena(arena));
 const keyboard = new KeyboardInput();
 const sound = new SketchAudio();
 const dialog = get<HTMLDialogElement>('help-dialog');
-dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule boss-instructions"><b>04</b><p><strong>Climb the boss ladder together.</strong> Defeat Dave → Cheese → Robot → Ninja in order. Each win unlocks that fighter for both players and opens the next boss. You each have three lives and no friendly fire. Drain the boss’s health to win; one surviving teammate can finish. Bosses warn before attacks, have attack armor, and speed up when enraged. Replay any available boss from the ladder.</p></div><p class="help-footnote">Jump clear of Dave’s slime. Cheese throws slowing blobs and heals with Cheese snack. Robot fires lasers and uses temporary hover boots; hold down to descend when playing him. Ninja warns before Shadow flurry: back away. Clubber’s Earthquake hits grounded enemies sharing a platform; Boomeranger’s throw hits going out and back.</p>');
+dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule boss-instructions"><b>04</b><p><strong>Climb the boss ladder together.</strong> Defeat Dave → Cheese → Robot → Ninja in order. Each win unlocks that fighter and their home arena, and opens the next boss. Choose unlocked arenas in either mode. You each have three lives and no friendly fire. Drain the boss’s health to win; one surviving teammate can finish. Bosses warn before attacks, have attack armor, and speed up when enraged. Replay any available boss from the ladder.</p></div><p class="help-footnote">Jump clear of Dave’s slime. Cheese throws slowing blobs and heals with Cheese snack. Robot fires lasers and uses temporary hover boots; hold down to descend when playing him. Ninja’s Vanish hides him for up to five seconds; attacking or being hit reveals him. Boxer punches and throws a giant glove with his ultra. Clubber’s Earthquake hits grounded enemies sharing a platform; Boomeranger’s throw hits going out and back.</p>');
 const announcer = get('announcer');
+dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule"><b>05</b><p><strong>Learn each arena.</strong> Slime Caves slows anyone standing in green slime. Ride the cheese clock; its sides knock you away. In The Lab, lifts carry you, flashing strips warn of spikes, and the striped wall pushes you toward them. Jump over it or ride its top. Moonlit Dojo has a gently swaying bridge. Arena hazards affect both teams.</p></div>');
 dialog.querySelector('.boss-instructions p')!.append(' Unlocks are saved in this browser at this game address.');
 let previousPhase: MatchPhase | '' = '';
 let previousMode: GameMode | '' = '';
 let previousBoss = '';
+let previousArena = '';
 let previousCountdown = -1;
 let pauseBeforeHelp = false;
 let soundBusy = false;
 
 function updateSelection() {
+  get('arena-progress').textContent = `${arenas.filter(a => progression.canSelectArena(a)).length} / ${arenas.length} unlocked`;
+  get('arena-description').textContent = match.arena.description;
+  document.querySelectorAll<HTMLButtonElement>('[data-arena]').forEach(button => {
+    const arena = arenas.find(a => a.id === button.dataset.arena)!;
+    const unlocked = progression.canSelectArena(arena);
+    const available = match.arenaAvailable(arena);
+    const selected = match.arena.id === arena.id;
+    const boss = bosses.find(b => b.id === arena.boss);
+    button.disabled = match.phase !== 'lobby' || !available;
+    button.setAttribute('aria-pressed', String(selected));
+    button.classList.toggle('arena-locked', !available);
+    const status = unlocked ? selected ? 'SELECTED' : 'READY TO PLAY' : available ? 'BOSS HOME · WIN TO UNLOCK' : `Beat ${boss?.name} to unlock`;
+    button.querySelector('[data-arena-status]')!.textContent = status;
+    button.setAttribute('aria-label', `${arena.name}. ${status}. ${arena.description}`);
+  });
   document.querySelectorAll<HTMLButtonElement>('[data-pick]').forEach(button => {
     const player = Number(button.dataset.player) as PlayerId;
     const character = characters.find(c => c.id === button.dataset.pick)!;
@@ -163,7 +187,7 @@ function refresh() {
     charge.setAttribute('aria-valuenow', String(Math.floor(f.charge)));
     (charge.firstElementChild as HTMLElement).style.width = `${f.charge}%`;
     charge.classList.toggle('ready', f.charge >= 100);
-    get(`ultra-label-${p}`).textContent = f.charge >= 100 ? 'ULTRA READY!' : f.character.ultra.name.toUpperCase();
+    get(`ultra-label-${p}`).textContent = f.invisible > 0 ? `INVISIBLE ${Math.ceil(f.invisible)}s` : f.charge >= 100 ? 'ULTRA READY!' : f.character.ultra.name.toUpperCase();
     get(`name-${p}`).closest('.player-hud')!.classList.toggle('player-eliminated', f.lives === 0);
   });
   const boss = match.boss;
@@ -179,8 +203,9 @@ function refresh() {
     get('boss-status').textContent = `${match.bossEnraged && boss.health > 0 ? 'ENRAGED · ' : ''}${Math.ceil(boss.health)} / ${boss.maxHealth} HP`;
     const ultraTip = boss.character.ultra.kind === 'heal' ? 'Healing windup! Keep the pressure on.'
       : boss.character.ultra.kind === 'hover' ? 'Hover boots! Watch for lasers from above.'
-      : boss.character.ultra.kind === 'spin' ? 'Back away from the spinning blades!' : 'Move away from the marked area.';
+      : boss.character.ultra.kind === 'invisibility' ? 'Ninja is about to vanish. A hit will reveal him!' : 'Move away from the marked area.';
     get('boss-tip').textContent = boss.health === 0 ? `${boss.character.name} is defeated!` : boss.respawn > 0 ? `${boss.character.name} fell! −70 HP. Coming back…`
+      : boss.invisible > 0 ? `Ninja vanished! ${Math.ceil(boss.invisible)}s left. His next attack or a hit reveals him.`
       : boss.attack?.ultra ? `${boss.character.ultra.name.toUpperCase()}! ${ultraTip}`
       : boss.attack ? `${boss.character.attack.name.toUpperCase()}! ${boss.character.attack.kind === 'projectile' ? 'Jump out of the firing line.' : 'Jump or back away.'}`
       : match.fighters.some(f => f.player !== 2 && f.slowed > 0) ? 'Slowed! Dodge blobs and jump clear of slime puddles.'
@@ -194,7 +219,7 @@ function refresh() {
     announcer.textContent = `Battle begins in ${count}.`;
     previousCountdown = count;
   }
-  if (match.phase !== previousPhase || match.mode !== previousMode || match.selectedBoss?.id !== previousBoss) {
+  if (match.phase !== previousPhase || match.mode !== previousMode || match.selectedBoss?.id !== previousBoss || match.arena.id !== previousArena) {
     const rewards = progression.recordResult(match, match.boss?.character.id);
     const rewardNames = rewards.map(c => c.name).join(' & ');
     const next = match.mode === 'boss' && match.winner === 'team' ? progression.nextBoss() : undefined;
@@ -204,18 +229,20 @@ function refresh() {
     nextButton.textContent = next ? `NEXT BOSS: ${next.name.toUpperCase()} ↗` : '';
     get('rematch').classList.toggle('secondary-rematch', Boolean(next));
     get('unlock-reward').hidden = rewards.length === 0;
-    get('unlock-reward').innerHTML = rewards.length ? `<strong>✦ ${escape(rewardNames.toUpperCase())} UNLOCKED!</strong><span>Both players can now choose ${escape(rewardNames)}.</span><small>${progression.saved ? 'Saved in this browser. Available in both modes.' : 'Available this session. Browser saving is unavailable.'}</small>` : '';
+    get('unlock-reward').innerHTML = rewards.length ? `<strong>✦ ${escape(rewardNames.toUpperCase())} UNLOCKED!</strong><span>Both players can now choose ${escape(rewardNames)}. ${escape(arenaForBoss(match.boss!.character.id).name)} is also unlocked!</span><small>${progression.saved ? 'Saved in this browser. Available in both modes.' : 'Available this session. Browser saving is unavailable.'}</small>` : '';
     get('result-choose').textContent = rewards.length ? `Choose ${rewardNames} — back to fighter select` : 'Back to fighter select';
     previousPhase = match.phase;
     previousMode = match.mode;
     previousBoss = match.selectedBoss?.id ?? '';
+    previousArena = match.arena.id;
     for (const [id, phase] of [['lobby-overlay', 'lobby'], ['countdown-overlay', 'countdown'], ['pause-overlay', 'paused'], ['result-overlay', 'finished']]) get(id).hidden = match.phase !== phase;
     get('arena').dataset.phase = match.phase;
     get('arena').dataset.mode = match.mode;
     const bossMode = match.mode === 'boss';
     const bossName = match.selectedBoss?.name ?? 'Boss';
     get('roster-hint').innerHTML = match.phase === 'lobby' ? bossMode ? `Pick your team. Take down ${escape(bossName)}.<br><span>Both players can choose any unlocked fighter.</span>` : 'Different doodles. Different trouble.<br><span>Choose a character for each player.</span>' : 'Your fighters are locked in.<br><span>Pause to change characters or mode.</span>';
-    get('arena-title').textContent = bossMode ? `THE ${bossName.toUpperCase()} CHALLENGE` : 'DESK DUEL';
+    get('arena-title').textContent = match.arena.name.toUpperCase();
+    document.querySelector('.arena-index')!.textContent = `/ ARENA 0${arenas.indexOf(match.arena) + 1}`;
     get('arena-rules').innerHTML = bossMode ? 'TEAM UP <b>·</b> NO FRIENDLY FIRE <b>·</b> 3 LIVES EACH' : '3 LIVES <b>·</b> DOUBLE JUMP <b>·</b> ULTRA MOVES';
     get('controls-divider').textContent = bossMode ? '+' : 'VS.';
     get('mode-explainer').innerHTML = bossMode ? `Same keyboard. Same team.<br>Beat ${escape(bossName)} before both players lose all lives.` : 'A friendly rivalry.<br>Three lives. Last doodle standing.';
@@ -233,7 +260,7 @@ function refresh() {
         const draw = match.winner === null;
         get('winner-title').textContent = won ? `You defeated ${bossName}!` : draw ? 'Everybody went down.' : `${bossName} wins this one.`;
         get('winner-label').textContent = won ? next ? 'TEAMWORK TAKES THE PAGE' : 'BOSS LADDER COMPLETE' : draw ? 'A VERY MESSY DRAW' : 'THE BOSS STILL REIGNS';
-        get('winner-detail').textContent = won ? next ? `${next.name} is ready to challenge. Pick your team for the next fight!` : 'All four bosses defeated. Every fighter is yours!' : draw ? `${bossName} is down, but so is the team. Rematch?` : `${Math.ceil(match.boss!.health)} HP left. Watch the attack warnings and try again.`;
+        get('winner-detail').textContent = won ? next ? `${next.name} is ready to challenge. Pick your team for the next fight!` : 'All four bosses defeated. Every fighter and arena is yours!' : draw ? `${bossName} is down, but so is the team. Rematch?` : `${Math.ceil(match.boss!.health)} HP left. Watch the attack warnings and try again.`;
         get('rematch').innerHTML = `${won ? `FACE ${escape(bossName.toUpperCase())} AGAIN` : 'TRY AGAIN TOGETHER'} <span>↗</span>`;
         announcer.textContent = get('winner-title').textContent;
       } else {
@@ -270,6 +297,9 @@ function chooseMode(mode: GameMode) {
   if (match.setMode(mode)) { refresh(); announcer.textContent = mode === 'boss' ? `Boss Battle. Players one and two are teammates against ${match.selectedBoss!.name}.` : 'Versus. Player one against player two.'; }
 }
 document.querySelectorAll<HTMLButtonElement>('[data-mode]').forEach(button => button.addEventListener('click', () => chooseMode(button.dataset.mode as GameMode)));
+document.querySelectorAll<HTMLButtonElement>('[data-arena]').forEach(button => button.addEventListener('click', () => {
+  if (match.selectArena(button.dataset.arena!)) { refresh(); announcer.textContent = `${match.arena.name} selected. ${match.arena.description}`; }
+}));
 function chooseBoss(id: string) {
   const boss = bosses.find(b => b.id === id);
   if (!boss || !match.selectBoss(boss)) return;
@@ -320,6 +350,12 @@ window.addEventListener('blur', pauseForFocus);
 document.addEventListener('visibilitychange', () => { if (document.hidden) pauseForFocus(); });
 
 refresh();
+document.querySelectorAll<HTMLCanvasElement>('[data-arena-preview]').forEach(canvas => {
+  const arena = arenas.find(a => a.id === canvas.dataset.arenaPreview)!;
+  const ctx = canvas.getContext('2d')!;
+  ctx.scale(canvas.width / WIDTH, canvas.height / HEIGHT);
+  drawArenaBackground(ctx, arena); drawArenaPlatforms(ctx, arena, platformsAt(arena, 0), 0);
+});
 const scene = new NotebookScene(match, keyboard, refresh, event => sound.play(event));
 const game = new Phaser.Game({
   type: Phaser.CANVAS,

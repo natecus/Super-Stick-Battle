@@ -1,5 +1,5 @@
 import { HEIGHT, PLATFORMS, PLAYER_COLORS, WIDTH } from './simulation';
-import type { CharacterDefinition, Fighter, Projectile } from './types';
+import type { CharacterDefinition, Fighter, Platform, Projectile } from './types';
 
 const INK = '#34352f';
 const PAPER = '#faf7ed';
@@ -55,7 +55,11 @@ export function drawCharacter(ctx: CanvasRenderingContext2D, character: Characte
   stroke([hip, [lean * 0.65, -45 + bob], shoulder, [head[0], head[1] + 15]]);
   if (color) stroke([[-3 + lean * 0.7, -43 + bob], [6 + lean * 0.7, -42 + bob]], 3, color);
 
-  if (appearance.weapon === 'club') {
+  if (appearance.weapon === 'gloves') {
+    ctx.fillStyle = PAPER; ctx.strokeStyle = INK; ctx.lineWidth = 2;
+    ctx.fillRect(lean - 14, -60 + bob, 28, 32); ctx.strokeRect(lean - 14, -60 + bob, 28, 32);
+  }
+  if (appearance.weapon === 'club' || appearance.weapon === 'gloves') {
     ctx.strokeStyle = '#787361'; ctx.lineWidth = 1.4;
     for (let row = 0; row < 3; row++) for (const side of [-1, 1]) {
       ctx.beginPath(); ctx.ellipse(lean * 0.7 + side * 4, -52 + row * 7 + bob, 4, 3, side * 0.3, 0, Math.PI * 2); ctx.stroke();
@@ -170,12 +174,21 @@ export function drawCharacter(ctx: CanvasRenderingContext2D, character: Characte
   if (attacking && appearance.weapon === 'boomerang') hand = [15 + Math.sin(progress * Math.PI) * 33, -60 - Math.cos(progress * Math.PI) * 12];
   if (attacking && appearance.face === 'cheese') hand = pose === 'ultra' ? [14, -76] : [20 + Math.sin(progress * Math.PI) * 30, -58];
   if (appearance.weapon === 'blaster') hand = [34 + lean, -58 + bob];
+  if (appearance.weapon === 'gloves') {
+    hand = [27 + lean + (attacking ? Math.sin(progress * Math.PI) * 43 : 0), -61 + bob];
+    backHand = [-25 + lean, -63 + bob];
+    if (pose === 'victory') { hand = [28, -103]; backHand = [-28, -103]; }
+  }
   if (attacking && appearance.weapon === 'claws') {
     hand = pose === 'ultra' ? [28, -86] : [24 + Math.sin(progress * Math.PI) * 27, -60];
     backHand = pose === 'ultra' ? [-28, -86] : [-28, -58];
   }
   stroke([shoulder, [(shoulder[0] + backHand[0]) * 0.5, backHand[1] + 7], backHand]);
   stroke([shoulder, [hand[0] * 0.5 + lean * 0.5, -49 + bob], hand]);
+  if (appearance.weapon === 'gloves') {
+    drawGlove(ctx, hand[0], hand[1], 1, appearance.accent);
+    drawGlove(ctx, backHand[0], backHand[1], 0.9, appearance.accent);
+  }
 
   if (appearance.weapon === 'boomerang') drawBoomerang(ctx, backHand[0], backHand[1] - 5, -0.8, 0.5, appearance.accent);
   if (appearance.weapon === 'claws') {
@@ -271,6 +284,12 @@ export function drawArrow(ctx: CanvasRenderingContext2D, x: number, y: number, a
 }
 
 export function drawProjectile(ctx: CanvasRenderingContext2D, p: Projectile, time: number) {
+  if (p.kind === 'glove') {
+    ctx.save(); ctx.translate(p.x, p.y); ctx.scale(Math.sign(p.vx) || 1, 1);
+    ctx.strokeStyle = '#c8544788';
+    for (let i = -1; i <= 1; i++) line(ctx, [[-28, i * 10], [-50 - Math.abs(i) * 7, i * 10]], 2);
+    drawGlove(ctx, 0, 0, p.radius / 14, '#c85447'); ctx.restore(); return;
+  }
   if (p.kind === 'arrow') return drawArrow(ctx, p.x, p.y, Math.atan2(p.vy, p.vx));
   if (p.kind === 'laser') {
     ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(Math.atan2(p.vy, p.vx)); ctx.lineCap = 'round';
@@ -303,6 +322,16 @@ export function drawProjectile(ctx: CanvasRenderingContext2D, p: Projectile, tim
   ctx.restore();
 }
 
+export function drawGlove(ctx: CanvasRenderingContext2D, x: number, y: number, scale: number, color: string) {
+  ctx.save(); ctx.translate(x, y); ctx.scale(scale, scale);
+  ctx.fillStyle = color; ctx.strokeStyle = INK; ctx.lineWidth = 1.8;
+  ctx.beginPath(); ctx.moveTo(-10, 7); ctx.lineTo(-12, -5); ctx.bezierCurveTo(-12, -20, 15, -19, 16, -5);
+  ctx.quadraticCurveTo(18, 9, 8, 12); ctx.lineTo(-7, 12); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(-10, 2, 5, 8, -0.5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#f4e8d1'; ctx.fillRect(-8, 9, 17, 7); ctx.strokeRect(-8, 9, 17, 7);
+  ctx.strokeStyle = '#fff9e6'; line(ctx, [[-2, -10], [7, -10]], 1.5); ctx.restore();
+}
+
 export function drawBoomerang(ctx: CanvasRenderingContext2D, x: number, y: number, angle: number, scale: number, color: string) {
   ctx.save(); ctx.translate(x, y); ctx.rotate(angle); ctx.scale(scale, scale);
   ctx.fillStyle = color; ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.lineJoin = 'round';
@@ -311,7 +340,7 @@ export function drawBoomerang(ctx: CanvasRenderingContext2D, x: number, y: numbe
   ctx.restore();
 }
 
-export function drawStage(ctx: CanvasRenderingContext2D) {
+export function drawStage(ctx: CanvasRenderingContext2D, platforms: Platform[] = PLATFORMS) {
   ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
   ctx.lineWidth = 1;
@@ -349,7 +378,7 @@ export function drawStage(ctx: CanvasRenderingContext2D) {
   ctx.fillStyle = '#8f8769'; ctx.font = '12px "Courier New", monospace';
   ctx.fillText('NO ERASERS.', 0, 2); ctx.fillText('NO EXCUSES.', 0, 20); ctx.restore();
 
-  for (const p of PLATFORMS) {
+  for (const p of platforms) {
     ctx.save();
     const depth = p.main ? 23 : 13;
     ctx.fillStyle = '#e1ddcf';

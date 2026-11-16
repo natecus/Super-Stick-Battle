@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { drawCharacter, drawProjectile, drawStage, drawStar, fighterPose, line } from './drawing';
+import { drawCharacter, drawProjectile, drawStar, fighterPose, line } from './drawing';
+import { drawArenaBackground, drawArenaPlatforms } from './arena-drawing';
 import { HEIGHT, Match, PLAYER_COLORS, STEP, WIDTH } from './simulation';
 import type { GameEvent } from './types';
 import type { KeyboardInput } from './input';
@@ -9,6 +10,8 @@ interface Caption { x: number; y: number; text: string; life: number; color: str
 
 export class NotebookScene extends Phaser.Scene {
   private surface!: Phaser.Textures.CanvasTexture;
+  private paper!: Phaser.Textures.CanvasTexture;
+  private lastArena = '';
   private accumulator = 0;
   private clock = 0;
   private uiClock = 0;
@@ -23,9 +26,7 @@ export class NotebookScene extends Phaser.Scene {
   }
 
   create() {
-    const paper = this.textures.createCanvas('paper', WIDTH, HEIGHT)!;
-    drawStage(paper.context);
-    paper.refresh();
+    this.paper = this.textures.createCanvas('paper', WIDTH, HEIGHT)!;
     this.add.image(0, 0, 'paper').setOrigin(0);
     this.surface = this.textures.createCanvas('ink', WIDTH, HEIGHT)!;
     this.add.image(0, 0, 'ink').setOrigin(0);
@@ -67,10 +68,16 @@ export class NotebookScene extends Phaser.Scene {
   }
 
   private renderInk() {
+    if (this.lastArena !== this.match.arena.id) {
+      drawArenaBackground(this.paper.context, this.match.arena); this.paper.refresh();
+      this.lastArena = this.match.arena.id;
+      this.game.canvas.setAttribute('aria-label', `${this.match.arena.name} arena. ${this.match.arena.description} Player one uses W A S D, F and G. Player two uses arrow keys, K and L.`);
+    }
     const ctx = this.surface.context;
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
     ctx.save();
     if (this.shake > 0 && !this.reducedMotion) ctx.translate(Math.sin(this.clock * 150) * this.shake * 20, Math.cos(this.clock * 180) * this.shake * 10);
+    drawArenaPlatforms(ctx, this.match.arena, this.match.platforms, this.match.elapsed);
 
     for (const hazard of this.match.hazards) {
       ctx.save();
@@ -98,7 +105,7 @@ export class NotebookScene extends Phaser.Scene {
         ctx.fillRect(f.attack.targetX - f.character.ultra.range / 2, 100, f.character.ultra.range, 430);
         ctx.restore();
       }
-      if (f.lives === 0 || f.respawn > 0) continue;
+      if (f.lives === 0 || f.respawn > 0 || f.invisible > 0) continue;
       ctx.save();
       if (f.attack && (f.player === 2 || f.attack.ultra && f.character.ultra.kind === 'slime-bomb')) {
         const warning = f.attack.ultra ? f.attack.elapsed < 0.62 : f.attack.elapsed < f.character.attack.windup;
@@ -108,7 +115,7 @@ export class NotebookScene extends Phaser.Scene {
             const x = f.facing > 0 ? f.x : f.x - f.character.attack.range;
             ctx.fillRect(x, f.y - 130, f.character.attack.range, 120); ctx.strokeRect(x, f.y - 130, f.character.attack.range, 120);
           } else if (f.character.ultra.kind === 'slime-bomb') {
-            for (const target of this.match.fighters.filter(target => target.team !== f.team && target.lives > 0 && target.respawn === 0)) {
+            for (const target of this.match.fighters.filter(target => target.team !== f.team && target.lives > 0 && target.respawn === 0 && target.invisible === 0)) {
               ctx.beginPath(); ctx.ellipse(target.x, target.y, f.character.ultra.range, 14, 0, 0, Math.PI * 2); ctx.stroke();
             }
           } else if (f.character.ultra.kind === 'spin') {

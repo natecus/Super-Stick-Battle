@@ -1,4 +1,5 @@
 import type { CharacterDefinition, GameMode, MatchPhase, MatchWinner } from './types';
+import type { ArenaDefinition } from './arenas';
 
 export const PROGRESS_KEY = 'super-stick-battle.progress.v1';
 export interface ProgressStorage { getItem(key: string): string | null; setItem(key: string, value: string): void }
@@ -30,6 +31,10 @@ export class Progression {
   }
 
   hasDefeated(bossId: string): boolean { return this.defeatedBosses.has(bossId); }
+
+  canSelectArena(arena: ArenaDefinition): boolean {
+    return !arena.boss || this.hasDefeated(arena.boss);
+  }
 
   canChallenge(boss: CharacterDefinition): boolean {
     return Boolean(boss.boss && (!boss.boss.requires || this.hasDefeated(boss.boss.requires)));

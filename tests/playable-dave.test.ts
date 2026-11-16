@@ -13,7 +13,7 @@ function tick(match: Match, seconds: number, frames: [InputFrame, InputFrame] = 
 function battle(coop = false) {
   const match = new Match(dave, sword, boss);
   if (coop) match.setMode('boss');
-  match.start(); tick(match, 3.01); return match;
+  match.selectArena('notebook'); match.start(); tick(match, 3.01); return match;
 }
 
 describe('playable Dave balance', () => {

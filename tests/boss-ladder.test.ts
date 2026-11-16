@@ -17,7 +17,7 @@ function tick(match: Match, seconds: number) { for (let i = 0; i < Math.ceil(sec
 function battle(character: CharacterDefinition, boss?: CharacterDefinition) {
   const match = new Match(character, sword, boss, () => true, () => true);
   if (boss) match.setMode('boss');
-  match.start(); tick(match, 3.01); return match;
+  match.selectArena('notebook'); match.start(); tick(match, 3.01); return match;
 }
 const cheese = characters.find(c => c.id === 'cheese')!;
 const robot = characters.find(c => c.id === 'robot')!;
@@ -34,7 +34,7 @@ describe('progressive boss ladder', () => {
       expect(bosses.filter(b => progress.canChallenge(b)).map(b => b.id)).toEqual(bosses.slice(0, i + 1).map(b => b.id));
       for (const later of bosses.slice(i + 1)) expect(progress.recordResult(win, later.id)).toEqual([]);
       const match = new Match(sword, sword, boss, c => progress.canSelect(c), b => progress.canChallenge(b));
-      match.setMode('boss'); match.start(); tick(match, 3.01);
+      match.setMode('boss'); match.selectArena('notebook'); match.start(); tick(match, 3.01);
       // Earn each reward from an actual final hit with one surviving teammate.
       match.fighters[1].lives = 0;
       match.fighters[0].x = 580; match.fighters[0].facing = 1;
@@ -157,12 +157,12 @@ describe('new boss and playable moves', () => {
     tick(match, 0.2); expect(player.hovering).toBe(0);
   });
 
-  it('Ninja boss gives a warning before the multi-hit ultra', () => {
+  it('Ninja boss gives a warning before vanishing without ultra damage', () => {
     const match = battle(sword, bosses[3]); const boss = match.boss!;
     match.fighters[0].x = boss.x - 60; match.fighters[1].x = boss.x + 60; boss.charge = 100;
     tick(match, 0.5); expect(boss.attack?.ultra).toBe(true);
     expect(match.fighters.slice(0, 2).map(f => f.damage)).toEqual([0, 0]);
-    tick(match, 0.16); expect(match.fighters.slice(0, 2).every(f => f.damage > 0)).toBe(true);
+    tick(match, 0.16); expect(boss.invisible).toBeGreaterThan(4); expect(match.fighters.slice(0, 2).every(f => f.damage === 0)).toBe(true);
   });
 
   it.each(bosses.slice(1))('$name AI deals damage and survives a normal encounter', boss => {

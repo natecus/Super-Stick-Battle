@@ -1,6 +1,6 @@
 # Super Stick Battle
 
-A local two-player browser platform fighter based on your character drawings. Made with TypeScript and Phaser 3.90, with animated pencil-style vector characters and a notebook-paper arena. Play against each other in Versus, or climb the Dave → Cheese → Robot → Ninja ladder together in Boss Battle.
+A local two-player browser platform fighter based on your character drawings. Made with TypeScript and Phaser 3.90, with animated pencil-style vector characters and five notebook-style arenas. Play against each other in Versus, or climb the Dave → Cheese → Robot → Ninja ladder together in Boss Battle.
 
 ## Start playing
 
@@ -61,7 +61,7 @@ To change mode or characters during a match, pause and choose **Change fighters*
 - Damage increases knockback. Damage resets after a knockout.
 - Dealing and receiving damage charges the ultra meter. Ultras spend the whole meter and don't refill the attacker's meter through their own hits. Knockouts halve remaining charge.
 - Respawning gives two seconds of protection, which ends immediately when attacking.
-- Platforms can be jumped through from underneath. Hold down to drop from floating platforms. The main platform is not droppable.
+- Ordinary platforms can be jumped through from underneath. Hold down to drop from floating platforms. Main floors and solid clock/wall tops are not droppable. The cheese clock and Lab wall also block their sides and undersides.
 - No match time limit. A simultaneous final knockout is a draw.
 
 | Character | Attack | Ultra |
@@ -75,7 +75,22 @@ To change mode or characters during a match, pause and choose **Change fighters*
 | Dave (boss opponent) | Powerful magic claws with a visible windup | Slime bombs leave temporary puddles that slow players |
 | Cheese (unlockable) | Nacho cheese blobs slow enemies briefly | Cheese snack removes 22 damage after a windup; cannot restore lives |
 | Robot (unlockable) | Fast straight laser bolts | Hover boots launch upward and slow descent for four seconds; hold down to descend |
-| Ninja (unlockable) | Quick, short-range katana cuts; fast and lightweight | Shadow flurry strikes on both sides |
+| Ninja (unlockable) | Quick, short-range katana cuts; fast and lightweight | Vanish hides him for five seconds; attacking or taking a hit reveals him |
+| Boxer | Quick close-range punches | A large glove flies straight ahead with powerful knockback |
+
+### Unlockable arenas
+
+Boss encounters start in their home arena. Win to use that arena in Versus or any available boss replay. Choose an arena above the battle screen while in the lobby. Rematches keep it; returning to Versus restores your last Versus choice. Existing saved boss victories automatically unlock their arenas.
+
+| Arena | Unlock | Features |
+| --- | --- | --- |
+| Notebook | Available immediately | Original four fixed platforms |
+| Slime Caves | Defeat Dave | Permanent green slime patches slow everyone, including bosses; jump clear to escape |
+| Cheese Land | Defeat Cheese | Swiss-cheese islands and a moving cheese clock; ride its top, avoid its knocking sides. Its rail is scenery |
+| The Lab | Defeat Robot | Three vertical lifts, alternating spikes with flashing warnings, and a moving striped wall that pushes toward them. Jump over the wall or land on top |
+| Moonlit Dojo | Defeat Ninja | Pagoda rooftops, bamboo, moonlight, lanterns, and a gently swaying rope bridge |
+
+Moving platforms carry their riders. Spikes deal 12 damage with knockback and a brief repeat-hit cooldown. Environmental hazards affect both teams and do not charge ultras. Arena motion and hazard timers freeze on pause and reset on restart. Ninja’s invisibility also hides his marker and shadow; boss AI cannot track hidden players, but attacks and spikes can still hit them.
 
 ### Boss Battle
 
@@ -86,11 +101,11 @@ Both players fight on the same team, with **no friendly fire**. Drain the boss's
 | Dave | Available immediately | 500 HP | Claws and slowing slime bombs |
 | Cheese | Defeat Dave | 650 HP | Slowing cheese blobs and a 35 HP healing snack |
 | Robot | Defeat Cheese | 800 HP | Lasers and five seconds of hover boots |
-| Ninja | Defeat Robot | 950 HP | Fast katana attacks and a telegraphed blade flurry |
+| Ninja | Defeat Robot | 950 HP | Fast katana attacks and a 4.5-second invisibility ultra |
 
-The boss ladder shows locked, ready, and defeated encounters. Each victory recruits that fighter and opens the next challenge. **Next boss** returns to the lobby so you can select newly unlocked teammates before starting. Rematch keeps the same opponent; defeated bosses remain available to replay. Completing Ninja unlocks the full roster.
+The boss ladder shows locked, ready, and defeated encounters. Each victory recruits that fighter, unlocks their home arena, and opens the next challenge. **Next boss** returns to the lobby so you can select newly unlocked teammates before starting. Rematch keeps the same opponent; defeated bosses remain available to replay. Completing Ninja unlocks the full roster and all arenas. Boxer is available from the start.
 
-Bosses chase players and jump between platforms; ranged bosses try to keep firing distance. Watch attack warnings, dodge projectiles, and back away from Ninja's flurry. Boss attacks have armor, so hitting them does not interrupt the windup. When enraged, bosses move and charge their ultras faster. Knocking a boss off the page removes 70 HP; surviving bosses return. Players keep their usual damage, knockback, and respawn rules.
+Bosses chase players and jump between platforms; ranged bosses try to keep firing distance. Watch attack warnings, dodge projectiles, and land a hit to reveal an invisible Ninja. Boss attacks have armor, so hitting them does not interrupt the windup. When enraged, bosses move and charge their ultras faster. Knocking a boss off the page removes 70 HP; surviving bosses return. Players keep their usual damage, knockback, and respawn rules.
 
 ### Unlock playable bosses
 

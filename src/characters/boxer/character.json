@@ -1,0 +1,12 @@
+{
+  "id": "boxer",
+  "name": "Boxer",
+  "order": 10,
+  "tagline": "These gloves have range.",
+  "role": "HEAVY HITTER",
+  "description": "A smiling six-pack and two big gloves. Land quick close-range punches, then send a giant glove flying across the arena.",
+  "appearance": { "weapon": "gloves", "face": "smile", "accent": "#c85447", "headRadius": 18, "height": 1.04, "lineWidth": 3 },
+  "stats": { "speed": 315, "jumpSpeed": 690, "weight": 1.25 },
+  "attack": { "kind": "melee", "name": "Punch", "damage": 13, "knockback": 330, "growth": 3.6, "cooldown": 0.4, "windup": 0.1, "duration": 0.27, "range": 88 },
+  "ultra": { "kind": "glove-throw", "name": "Glove throw", "damage": 26, "knockback": 560, "growth": 5, "duration": 0.65, "range": 860, "count": 1 }
+}

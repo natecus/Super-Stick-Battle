@@ -4,7 +4,7 @@
   "order": 9,
   "tagline": "A blur in the margins.",
   "role": "SHADOW DUELIST",
-  "description": "Beat Ninja to recruit him. Quick katana cuts and a spinning blade flurry trade reach and weight for speed.",
+  "description": "Beat Ninja to recruit him. Quick katana cuts and Vanish let him disappear for five seconds. Attacking or taking a hit reveals him.",
   "appearance": {
     "weapon": "sword",
     "face": "ninja",
@@ -30,14 +30,15 @@
     "range": 82
   },
   "ultra": {
-    "kind": "spin",
-    "name": "Shadow flurry",
-    "damage": 6,
-    "knockback": 235,
-    "growth": 2.6,
-    "duration": 1.15,
-    "range": 100,
-    "count": 5
+    "kind": "invisibility",
+    "name": "Vanish",
+    "damage": 0,
+    "knockback": 0,
+    "growth": 0,
+    "duration": 0.85,
+    "range": 0,
+    "count": 1,
+    "invisibleDuration": 5
   },
   "playable": true,
   "unlock": {

@@ -17,7 +17,7 @@ The same vector rig renders the roster portrait and every gameplay animation. Yo
 
 | Field | Supported values | Meaning |
 | --- | --- | --- |
-| `weapon` | `sword`, `bow`, `staff`, `club`, `boomerang`, `claws`, `blaster`, `none` | Which animated weapon is drawn |
+| `weapon` | `sword`, `bow`, `staff`, `club`, `boomerang`, `claws`, `blaster`, `gloves`, `none` | Which animated weapon is drawn |
 | `face` | `smile`, `grin`, `angry`, `slime`, `cheese`, `robot`, `ninja` | Face and character details, including Cheese's wedge head, Robot's metal body, and Ninja's mask |
 | `accent` | Six-digit hex, e.g. `#4a8061` | Weapon and card accent; player colors stay blue/coral |
 | `headRadius` | 10–25 | Drawn head size, typically 17 |
@@ -65,7 +65,10 @@ All ultras require a full meter. Fields common to all: `kind`, `name`, `damage`,
 | `heal` | After 0.62 seconds, removes player damage or restores boss HP using required `healAmount`; cannot restore lives | Reserved (20) | Set to 1 |
 | `hover` | After 0.62 seconds, launches upward and limits downward speed for required `hoverDuration` seconds; down bypasses the limit | Reserved (20) | Set to 1 |
 
-Support ultras (`heal`, `hover`) use placeholder damage/knockback values of 1 and growth 0; they do not deal damage. Their animation duration must exceed 0.62 seconds. Boss `spin` ultras also use a 0.62-second warning before the first strike; set their duration above 0.62 seconds.
+| `invisibility` | After 0.62 seconds, hides body/marker/shadow for required `invisibleDuration`; an attack or hit reveals the fighter | Reserved (0) | Set to 1 |
+| `glove-throw` | Throws one straight glove at 700 pixels/second after 0.26 seconds; duration must exceed windup | Travel distance | Set to 1 |
+
+Support ultras (`heal`, `hover`, `invisibility`) accept damage/knockback/range values of 0 and growth 0; they do not deal damage. Their animation duration must exceed 0.62 seconds. Boss `spin` ultras also use a 0.62-second warning before the first strike; set their duration above 0.62 seconds.
 
 Player attacks are interruptible when hit; Dave's attacks have boss armor. Shared behaviors keep ordinary additions confined to a character folder. For a completely new mechanic, add its type in `src/game/types.ts`, validate it in `src/characters/schema.ts`, implement it in `src/game/simulation.ts`, and add appropriate artwork in `drawing.ts`/`scene.ts`. Keep gameplay rules separate from drawing code.
 
@@ -88,3 +91,7 @@ Boss encounters are discovered automatically from `src/characters/*/boss.json`. 
 ## Check your addition
 
 Run `npm test` and `npm run build`. Automated tests validate all discovered character folders, including duplicate IDs and invalid numbers. Test the new fighter against each existing fighter, against itself, and on a team against Dave. Check jumping onto every platform, facing both ways, hitting in the air, filling the ultra meter, respawning, and rematching. In Boss Battle, confirm its attacks cannot hurt its teammate.
+
+## Arena definitions
+
+`src/game/arenas.ts` owns home-arena boss IDs, platform geometry and motion, safe starting positions, permanent slime patches, and spike timing. A boss victory unlocks its arena using the same saved defeated-boss IDs. `platformsAt` produces deterministic geometry from match elapsed time; `arena-drawing.ts` renders that exact geometry, and `simulation.ts` resolves riders, solids, and hazards. New arenas need matching drawing support and physics tests. Keep decorative scenery separate from collidable surfaces.

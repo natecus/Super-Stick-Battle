@@ -15,9 +15,9 @@ function memoryStorage(initial?: string): ProgressStorage {
 function tick(match: Match, seconds: number) { for (let i = 0; i < Math.ceil(seconds / STEP); i++) match.step(STEP); }
 
 describe('boss victory unlocks', () => {
-  it('keeps Dave locked while the original five fighters are available', () => {
+  it('keeps Dave locked while the original five fighters and Boxer are available', () => {
     const progress = new Progression(characters, memoryStorage());
-    expect(characters.filter(c => progress.canSelect(c)).map(c => c.id)).toEqual(['swordsman', 'archer', 'wizard', 'clubber', 'boomeranger']);
+    expect(characters.filter(c => progress.canSelect(c)).map(c => c.id)).toEqual(['swordsman', 'archer', 'wizard', 'clubber', 'boomeranger', 'boxer']);
     expect(progress.canSelect(boss)).toBe(false);
     const match = new Match(sword, sword, boss, c => progress.canSelect(c));
     match.select(0, dave); match.select(1, dave);
