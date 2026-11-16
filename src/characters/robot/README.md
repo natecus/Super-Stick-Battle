@@ -1,6 +1,6 @@
 # Robot
 
-Boss 3 in the Dave → Cheese → Robot → Ninja ladder. Defeat cheese to challenge this encounter. Victory unlocks the separate player configuration for both local players, saved in the existing browser progress.
+Boss 1 in the Robot → Ninja → Cheese → Dave ladder. Available immediately. Victory unlocks the separate player configuration for both local players, saved in the existing browser progress.
 
 Beat Robot to recruit him. Fire quick laser bolts and activate hover boots for a launch and four seconds of slow descent. Hold down to land.
 

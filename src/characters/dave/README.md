@@ -2,6 +2,8 @@
 
 Based on the green, crowned figure and move notes in `reference.jpeg`, recreated in the notebook's animated line-art style.
 
+Dave is the fourth and final boss in the Robot → Ninja → Cheese → Dave ladder. Defeat Cheese to challenge him.
+
 Dave has two separate configurations: `boss.json` for the AI opponent and `character.json` for the unlockable player. Win Boss Battle to unlock the player version for both local players in either mode. The victory and roster screens show the unlock, which persists in that browser at that game address. Old victories from before the unlock feature were not recorded.
 
 Boss tuning lives in `boss.json`: `boss.health` (500), `boss.scale` (1.65), `boss.enrageAt` (0.5), and `boss.chargePerSecond` (14). His `stats`, normal `attack`, and `ultra` fields work like other character packs. Boss armor limits knockback and prevents repeated hits from cancelling his telegraphed attacks. Falling off the page costs Dave 70 HP and respawns him if he survives. At half health he speeds up and charges slime bombs faster.

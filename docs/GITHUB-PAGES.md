@@ -21,7 +21,7 @@ GitHub's built-in workflow token handles deployment; no personal token or other 
 ## Verify the published game
 
 - Open the published URL and check that all five arena previews and all ten fighter cards load.
-- Select Boss Battle. A fresh browser should show Dave ready, then Cheese, Robot, and Ninja gated in order.
+- Select Boss Battle. A fresh browser should show Robot ready, then Ninja, Cheese, and Dave gated in order.
 - Start a match, try both players' controls, pause, and return to fighter selection.
 - Win a boss encounter and refresh to confirm the unlock persists in that browser.
 

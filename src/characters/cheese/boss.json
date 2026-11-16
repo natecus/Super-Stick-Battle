@@ -1,10 +1,10 @@
 {
   "id": "cheese",
   "name": "Cheese",
-  "order": 7,
+  "order": 9,
   "tagline": "Nacho average opponent.",
   "role": "THE BIG CHEESE",
-  "description": "Defeat dave to challenge Cheese. Win to unlock the balanced playable version.",
+  "description": "Defeat Ninja to challenge Cheese. Win to unlock his playable version, Cheese Land, and the Dave encounter.",
   "appearance": {
     "weapon": "none",
     "face": "cheese",
@@ -50,6 +50,6 @@
     "scale": 1.55,
     "enrageAt": 0.5,
     "chargePerSecond": 10,
-    "requires": "dave"
+    "requires": "ninja"
   }
 }

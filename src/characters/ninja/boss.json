@@ -1,10 +1,10 @@
 {
   "id": "ninja",
   "name": "Ninja",
-  "order": 9,
+  "order": 8,
   "tagline": "A blur in the margins.",
-  "role": "THE FINAL SHADOW",
-  "description": "Defeat robot to challenge Ninja. Win to unlock the balanced playable version.",
+  "role": "THE SILENT SHADOW",
+  "description": "Defeat Robot to challenge Ninja. Win to unlock his playable version, Moonlit Dojo, and the Cheese encounter.",
   "appearance": {
     "weapon": "sword",
     "face": "ninja",

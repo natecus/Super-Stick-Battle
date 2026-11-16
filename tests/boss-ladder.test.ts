@@ -4,6 +4,7 @@ import { validateBossProgression, validateCharacter } from '../src/characters/sc
 import { Progression, PROGRESS_KEY, type ProgressStorage } from '../src/game/progression';
 import { Match, STEP } from '../src/game/simulation';
 import { emptyInput, type CharacterDefinition } from '../src/game/types';
+import { arenaForBoss } from '../src/game/arenas';
 
 const sword = characters.find(c => c.id === 'swordsman')!;
 const win = { phase: 'finished', mode: 'boss', winner: 'team' } as const;
@@ -27,7 +28,7 @@ describe('progressive boss ladder', () => {
   it('opens exactly one new encounter per victory, saves rewards, and allows replay', () => {
     const save = storage();
     let progress = new Progression(characters, save, bosses);
-    expect(bosses.map(b => b.id)).toEqual(['dave', 'cheese', 'robot', 'ninja']);
+    expect(bosses.map(b => b.id)).toEqual(['robot', 'ninja', 'cheese', 'dave']);
     for (let i = 0; i < bosses.length; i++) {
       const boss = bosses[i];
       expect(progress.nextBoss()?.id).toBe(boss.id);
@@ -58,11 +59,21 @@ describe('progressive boss ladder', () => {
     expect(JSON.parse(save.getItem(PROGRESS_KEY)!).defeatedBosses).toEqual(bosses.map(b => b.id));
   });
 
-  it('keeps existing Dave saves and opens Cheese without unlocking later fighters', () => {
-    const progress = new Progression(characters, storage('{"version":1,"defeatedBosses":["dave"]}'), bosses);
-    expect(progress.canSelect(characters.find(c => c.id === 'dave')!)).toBe(true);
-    expect(progress.nextBoss()?.id).toBe('cheese');
-    expect([cheese, robot, ninja].some(c => progress.canSelect(c))).toBe(false);
+  it.each([1, 2, 3, 4])('preserves %i victories from the old ladder without granting unearned rewards', count => {
+    const defeated = ['dave', 'cheese', 'robot', 'ninja'].slice(0, count);
+    const progress = new Progression(characters, storage(JSON.stringify({ version: 1, defeatedBosses: defeated })), bosses);
+    for (const boss of bosses) {
+      const earned = defeated.includes(boss.id);
+      expect(progress.canSelect(characters.find(c => c.id === boss.id)!)).toBe(earned);
+      expect(progress.canSelectArena(arenaForBoss(boss.id))).toBe(earned);
+      if (earned) {
+        expect(progress.canChallenge(boss)).toBe(true);
+        const replay = new Match(sword, sword, boss, c => progress.canSelect(c), b => progress.canChallenge(b));
+        expect(replay.setMode('boss')).toBe(true); replay.start(); expect(replay.phase).toBe('countdown');
+        expect(progress.recordResult(win, boss.id)).toEqual([]);
+      }
+    }
+    expect(progress.nextBoss()?.id).toBe(count === 4 ? undefined : count === 3 ? 'ninja' : 'robot');
   });
 
   it('blocks locked encounters in the simulation and cannot change bosses mid-match', () => {
@@ -70,19 +81,19 @@ describe('progressive boss ladder', () => {
     const match = new Match(sword, sword, bosses[0], c => progress.canSelect(c), b => progress.canChallenge(b));
     expect(match.selectBoss(bosses[1])).toBe(false);
     expect(new Match(sword, sword, bosses[1]).setMode('boss')).toBe(false);
-    progress.recordResult(win, 'dave');
+    progress.recordResult(win, 'robot');
     expect(match.selectBoss(bosses[1])).toBe(true);
     match.setMode('boss'); match.start();
     expect(match.selectBoss(bosses[0])).toBe(false);
     match.pause(); expect(match.selectBoss(bosses[0])).toBe(false);
     match.lobby(); expect(match.selectBoss(bosses[0])).toBe(true);
-    expect(match.boss!.character.id).toBe('dave');
+    expect(match.boss!.character.id).toBe('robot');
   });
 
   it.each(['boss', null] as const)('does not advance on a loss or draw (%s)', winner => {
     const progress = new Progression(characters, storage(), bosses);
     for (const boss of bosses) expect(progress.recordResult({ ...win, winner }, boss.id)).toEqual([]);
-    expect(progress.nextBoss()?.id).toBe('dave');
+    expect(progress.nextBoss()?.id).toBe('robot');
   });
 
   it('completes the ladder even when saving is unavailable', () => {
@@ -128,7 +139,7 @@ describe('new boss and playable moves', () => {
   });
 
   it('boss Cheese heals HP rather than damage and never exceeds maximum HP', () => {
-    const match = battle(sword, bosses[1]); const boss = match.boss!;
+    const match = battle(sword, bosses.find(b => b.id === 'cheese')!); const boss = match.boss!;
     match.fighters[0].x = 280; match.fighters[1].x = 1000;
     boss.health = 500; boss.charge = 100; boss.attack = null; boss.cooldown = 0;
     tick(match, 0.7); expect(boss.health).toBe(535);
@@ -158,14 +169,14 @@ describe('new boss and playable moves', () => {
   });
 
   it('Ninja boss gives a warning before vanishing without ultra damage', () => {
-    const match = battle(sword, bosses[3]); const boss = match.boss!;
+    const match = battle(sword, bosses.find(b => b.id === 'ninja')!); const boss = match.boss!;
     match.fighters[0].x = boss.x - 60; match.fighters[1].x = boss.x + 60; boss.charge = 100;
     tick(match, 0.5); expect(boss.attack?.ultra).toBe(true);
     expect(match.fighters.slice(0, 2).map(f => f.damage)).toEqual([0, 0]);
     tick(match, 0.16); expect(boss.invisible).toBeGreaterThan(4); expect(match.fighters.slice(0, 2).every(f => f.damage === 0)).toBe(true);
   });
 
-  it.each(bosses.slice(1))('$name AI deals damage and survives a normal encounter', boss => {
+  it.each(bosses.filter(b => b.id !== 'dave'))('$name AI deals damage and survives a normal encounter', boss => {
     const match = battle(sword, boss); tick(match, 8);
     expect(match.fighters.slice(0, 2).some(f => f.damage > 0 || f.lives < 3)).toBe(true);
     expect(Number.isFinite(match.boss!.x)).toBe(true); expect(match.boss!.health).toBeGreaterThan(0);

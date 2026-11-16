@@ -1,6 +1,6 @@
 # Super Stick Battle
 
-A local two-player browser platform fighter based on your character drawings. Made with TypeScript and Phaser 3.90, with animated pencil-style vector characters and five notebook-style arenas. Play against each other in Versus, or climb the Dave → Cheese → Robot → Ninja ladder together in Boss Battle.
+A local two-player browser platform fighter based on your character drawings. Made with TypeScript and Phaser 3.90, with animated pencil-style vector characters and five notebook-style arenas. Play against each other in Versus, or climb the Robot → Ninja → Cheese → Dave ladder together in Boss Battle.
 
 ## Start playing
 
@@ -51,7 +51,7 @@ Each browser has its own independent match, with **two people sharing that devic
 
 Tap jump again for a second jump. Attacks trigger on a press, not continuous holding. Face a direction by moving toward it. Some keyboards cannot register every multi-key combination; use a keyboard with good rollover if simultaneous inputs are missed.
 
-Choose **Versus** or **Boss Battle** above the arena. Select each player's character using the **P1** and **P2** buttons on the cards, then start the match. Both players can use the same character; blue and coral labels distinguish them. Dave, Cheese, Robot, and Ninja start locked as playable fighters. Defeat each boss to unlock the balanced player version in either mode and open the next boss encounter. Sound is off initially and can be enabled with the sound button. The game pauses automatically when its window loses focus.
+Choose **Versus** or **Boss Battle** above the arena. Select each player's character using the **P1** and **P2** buttons on the cards, then start the match. Both players can use the same character; blue and coral labels distinguish them. Robot, Ninja, Cheese, and Dave start locked as playable fighters. Defeat each boss to unlock the balanced player version in either mode and open the next boss encounter. Sound is off initially and can be enabled with the sound button. The game pauses automatically when its window loses focus.
 
 To change mode or characters during a match, pause and choose **Change fighters**. Rematches keep the same mode and characters.
 
@@ -98,12 +98,12 @@ Both players fight on the same team, with **no friendly fire**. Drain the boss's
 
 | Boss | Requirement to challenge | Health | What to watch for |
 | --- | --- | --- | --- |
-| Dave | Available immediately | 500 HP | Claws and slowing slime bombs |
-| Cheese | Defeat Dave | 650 HP | Slowing cheese blobs and a 35 HP healing snack |
-| Robot | Defeat Cheese | 800 HP | Lasers and five seconds of hover boots |
+| Robot | Available immediately | 800 HP | Lasers and five seconds of hover boots |
 | Ninja | Defeat Robot | 950 HP | Fast katana attacks and a 4.5-second invisibility ultra |
+| Cheese | Defeat Ninja | 650 HP | Slowing cheese blobs and a 35 HP healing snack |
+| Dave | Defeat Cheese | 500 HP | Claws and slowing slime bombs |
 
-The boss ladder shows locked, ready, and defeated encounters. Each victory recruits that fighter, unlocks their home arena, and opens the next challenge. **Next boss** returns to the lobby so you can select newly unlocked teammates before starting. Rematch keeps the same opponent; defeated bosses remain available to replay. Completing Ninja unlocks the full roster and all arenas. Boxer is available from the start.
+The boss ladder shows locked, ready, and defeated encounters. Each victory recruits that fighter, unlocks their home arena, and opens the next challenge. **Next boss** returns to the lobby so you can select newly unlocked teammates before starting. Rematch keeps the same opponent; defeated bosses remain available to replay. Completing Dave unlocks the full roster and all arenas. Boxer is available from the start.
 
 Bosses chase players and jump between platforms; ranged bosses try to keep firing distance. Watch attack warnings, dodge projectiles, and land a hit to reveal an invisible Ninja. Boss attacks have armor, so hitting them does not interrupt the windup. When enraged, bosses move and charge their ultras faster. Knocking a boss off the page removes 70 HP; surviving bosses return. Players keep their usual damage, knockback, and respawn rules.
 
@@ -115,7 +115,7 @@ Playable Dave has ordinary size, three lives, normal knockback and interruptible
 
 All four playable versions have ordinary size, three lives, interruptible attacks, and combat-earned ultra charge. Cheese's snack reduces damage instead of healing boss HP. Robot's hover does not grant invulnerability or extra jumps, ends on knockout, and pauses with the match. The short hover duration keeps the drawing's flight idea suited to the arena.
 
-Unlocks save automatically **in the browser at the game address you use**. Both local players share that save. Different computers, browser profiles, or addresses (for example `localhost` versus your LAN IP) have separate progress. Clearing site data clears unlocks. If browser saving is unavailable, rewards remain available for the current session and the game says so. **Existing Dave unlocks are preserved and immediately open Cheese's encounter.**
+Unlocks save automatically **in the browser at the game address you use**. Both local players share that save. Different computers, browser profiles, or addresses (for example `localhost` versus your LAN IP) have separate progress. Clearing site data clears unlocks. If browser saving is unavailable, rewards remain available for the current session and the game says so. **Existing victories keep their fighters, arenas, and boss replays unlocked. New victories follow Robot → Ninja → Cheese → Dave.**
 
 ## Add a character
 

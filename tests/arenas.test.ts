@@ -6,6 +6,8 @@ import { Progression, PROGRESS_KEY } from '../src/game/progression';
 import { emptyInput, type Fighter, type InputFrame } from '../src/game/types';
 
 const sword = characters[0];
+const daveBoss = bosses.find(b => b.id === 'dave')!;
+const robotBoss = bosses.find(b => b.id === 'robot')!;
 const input = (values: Partial<InputFrame> = {}) => ({ ...emptyInput(), ...values });
 function tick(m: Match, seconds: number, frames: [InputFrame, InputFrame] = [input(), input()]) {
   for (let i = 0; i < Math.ceil(seconds / STEP); i++) m.step(STEP, frames);
@@ -42,9 +44,9 @@ describe('arena progression and lifecycle', () => {
   });
 
   it('remembers the versus arena, switches boss homes, and blocks changes during play', () => {
-    const m = new Match(sword, sword, bosses[0], () => true, () => true, () => true);
+    const m = new Match(sword, sword, daveBoss, () => true, () => true, () => true);
     m.selectArena('cheese-land'); m.setMode('boss'); expect(m.arena.id).toBe('slime-caves');
-    m.selectBoss(bosses[2]); expect(m.arena.id).toBe('the-lab');
+    m.selectBoss(robotBoss); expect(m.arena.id).toBe('the-lab');
     m.setMode('duel'); expect(m.arena.id).toBe('cheese-land');
     m.start(); expect(m.selectArena('notebook')).toBe(false);
     tick(m, 5); m.pause(); const frozen = structuredClone(m.platforms); const elapsed = m.elapsed;
@@ -67,7 +69,7 @@ describe('arena progression and lifecycle', () => {
 
 describe('moving surfaces and environmental hazards', () => {
   it('starts both modes clear of the Lab spikes and moving wall, including after a fighter change', () => {
-    const m = new Match(sword, sword, bosses[2], () => true, () => true, () => true);
+    const m = new Match(sword, sword, robotBoss, () => true, () => true, () => true);
     for (const mode of ['duel', 'boss'] as const) {
       m.lobby(); m.setMode(mode); m.selectArena('the-lab'); m.select(1, characters.at(-1)!);
       for (const f of m.fighters) {
@@ -130,7 +132,7 @@ describe('moving surfaces and environmental hazards', () => {
   });
 
   it('permanent cave slime slows either team and stops refreshing after a jump', () => {
-    const m = new Match(sword, sword, bosses[0]); m.setMode('boss'); m.start(); tick(m, 3.01);
+    const m = new Match(sword, sword, daveBoss, undefined, () => true); m.setMode('boss'); m.start(); tick(m, 3.01);
     const hero = m.fighters[0], boss = m.boss!; boss.stun = 100; boss.cooldown = 999;
     stand(m, hero, 0, 100); stand(m, boss, 0, 470); m.step(STEP);
     expect(hero.slowed).toBeGreaterThan(0); expect(boss.slowed).toBeGreaterThan(0);

@@ -1,6 +1,6 @@
 # Cheese
 
-Boss 2 in the Dave → Cheese → Robot → Ninja ladder. Defeat dave to challenge this encounter. Victory unlocks the separate player configuration for both local players, saved in the existing browser progress.
+Boss 3 in the Robot → Ninja → Cheese → Dave ladder. Defeat Ninja to challenge this encounter. Victory unlocks the separate player configuration for both local players, saved in the existing browser progress.
 
 Beat Cheese to recruit him. Nacho cheese blobs slow enemies; Cheese snack removes 22 damage after a windup.
 

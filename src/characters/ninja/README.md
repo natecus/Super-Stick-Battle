@@ -1,6 +1,6 @@
 # Ninja
 
-Boss 4 in the Dave → Cheese → Robot → Ninja ladder. Defeat robot to challenge this encounter. Victory unlocks the separate player configuration for both local players, saved in the existing browser progress.
+Boss 2 in the Robot → Ninja → Cheese → Dave ladder. Defeat Robot to challenge this encounter. Victory unlocks the separate player configuration for both local players, saved in the existing browser progress.
 
 Beat Ninja to recruit him and unlock Moonlit Dojo. Quick katana cuts trade reach and weight for speed. Vanish replaces his old spinning ultra: after a 0.62-second windup he disappears for five seconds (4.5 for the boss). Attacking, getting hit, or losing a life reveals him. His marker and shadow are hidden too, and boss AI cannot track an invisible player.
 

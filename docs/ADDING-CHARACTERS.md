@@ -84,9 +84,9 @@ Playable Dave lives in `src/characters/dave/character.json`; his boss opponent l
 
 The boss configuration has `playable: false` and a `boss` object with `health` (500), `scale` (1.65), `enrageAt` (0.5, a fraction of health), and `chargePerSecond` (14). His movement and attack numbers use the same fields as ordinary fighters. `src/game/boss-ai.ts` controls pursuit and attack decisions. Keep boss-only fields out of playable character configurations.
 
-Boss encounters are discovered automatically from `src/characters/*/boss.json`. Add `boss.requires` with the previous encounter's ID to gate a boss behind that victory; omit it for a starting boss. The current chain is Dave → Cheese → Robot → Ninja, ordered by `order`. Missing prerequisites and cycles fail validation. Add a separate playable `character.json` with `unlock.boss` pointing to this encounter. The menus, health bars, warnings, and victory labels use the selected boss's configuration.
+Boss encounters are discovered automatically from `src/characters/*/boss.json`. Add `boss.requires` with the previous encounter's ID to gate a boss behind that victory; omit it for a starting boss. The current chain is Robot → Ninja → Cheese → Dave, ordered by `order`. Missing prerequisites and cycles fail validation. Add a separate playable `character.json` with `unlock.boss` pointing to this encounter. The menus, health bars, warnings, and victory labels use the selected boss's configuration.
 
-`Progression` receives the boss roster and checks prerequisites for rewards and selection. `Match.selectBoss` only accepts accessible bosses in the lobby. Player and boss configurations share an ID but have independent tuning. Existing version-1 saves keep their Dave victory and open Cheese automatically. The character helper creates playable fighters; add boss encounter settings manually.
+`Progression` receives the boss roster and checks prerequisites for rewards and selection. `Match.selectBoss` only accepts accessible bosses in the lobby. Player and boss configurations share an ID but have independent tuning. Existing version-1 saves keep all earned fighters, arenas, and defeated-boss replays; unfinished encounters follow the current prerequisites. The character helper creates playable fighters; add boss encounter settings manually.
 
 ## Check your addition
 

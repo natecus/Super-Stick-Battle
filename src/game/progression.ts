@@ -37,7 +37,8 @@ export class Progression {
   }
 
   canChallenge(boss: CharacterDefinition): boolean {
-    return Boolean(boss.boss && (!boss.boss.requires || this.hasDefeated(boss.boss.requires)));
+    // Reordering the ladder must not take away replays earned by an older save.
+    return Boolean(boss.boss && (this.hasDefeated(boss.id) || !boss.boss.requires || this.hasDefeated(boss.boss.requires)));
   }
 
   nextBoss(): CharacterDefinition | undefined {

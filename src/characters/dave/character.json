@@ -1,7 +1,7 @@
 {
   "id": "dave",
   "name": "Dave",
-  "order": 7,
+  "order": 10,
   "playable": true,
   "unlock": { "boss": "dave" },
   "tagline": "Small crown. Slippery tactics.",

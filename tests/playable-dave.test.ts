@@ -11,7 +11,7 @@ function tick(match: Match, seconds: number, frames: [InputFrame, InputFrame] = 
   for (let i = 0; i < Math.ceil(seconds / STEP); i++) match.step(STEP, frames);
 }
 function battle(coop = false) {
-  const match = new Match(dave, sword, boss);
+  const match = new Match(dave, sword, boss, undefined, () => true);
   if (coop) match.setMode('boss');
   match.selectArena('notebook'); match.start(); tick(match, 3.01); return match;
 }

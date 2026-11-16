@@ -1,10 +1,10 @@
 {
   "id": "robot",
   "name": "Robot",
-  "order": 8,
+  "order": 7,
   "tagline": "Beep. Boop. Bring it.",
   "role": "THE METAL MENACE",
-  "description": "Defeat cheese to challenge Robot. Win to unlock the balanced playable version.",
+  "description": "The first boss challenge. Defeat Robot to unlock his playable version, The Lab, and the Ninja encounter.",
   "appearance": {
     "weapon": "blaster",
     "face": "robot",
@@ -48,7 +48,6 @@
     "health": 800,
     "scale": 1.6,
     "enrageAt": 0.5,
-    "chargePerSecond": 13,
-    "requires": "cheese"
+    "chargePerSecond": 13
   }
 }

@@ -11,7 +11,7 @@ const sword = characters[0];
 const input = (values: Partial<InputFrame> = {}) => ({ ...emptyInput(), ...values });
 function tick(m: Match, seconds: number) { for (let i = 0; i < Math.ceil(seconds / STEP); i++) m.step(STEP); }
 function battle(character = ninja, coop = false) {
-  const m = new Match(character, sword, bosses[0], () => true);
+  const m = new Match(character, sword, bosses.find(b => b.id === 'dave')!, () => true, () => true);
   if (coop) m.setMode('boss'); m.selectArena('notebook'); m.start(); tick(m, 3.01);
   if (m.boss) { m.boss.stun = 100; m.boss.cooldown = 999; }
   return m;

@@ -14,7 +14,7 @@ function tick(match: Match, seconds: number, frames: [InputFrame, InputFrame] = 
   for (let i = 0; i < Math.ceil(seconds / STEP); i++) match.step(STEP, frames);
 }
 function battle(first: CharacterDefinition = sword, second: CharacterDefinition = archer) {
-  const match = new Match(first, second, dave);
+  const match = new Match(first, second, dave, undefined, () => true);
   expect(match.setMode('boss')).toBe(true);
   match.selectArena('notebook'); match.start(); tick(match, 3.01);
   return match;
