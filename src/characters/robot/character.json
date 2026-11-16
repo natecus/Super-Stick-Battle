@@ -1,7 +1,7 @@
 {
   "id": "robot",
   "name": "Robot",
-  "order": 8,
+  "order": 9,
   "tagline": "Beep. Boop. Bring it.",
   "role": "LASER ENGINEER",
   "description": "Beat Robot to recruit him. Fire quick laser bolts and activate hover boots for a launch and four seconds of slow descent. Hold down to land.",
