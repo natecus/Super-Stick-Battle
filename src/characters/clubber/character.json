@@ -1,0 +1,12 @@
+{
+  "id": "clubber",
+  "name": "Clubber",
+  "order": 4,
+  "tagline": "Big stick. Bigger problems.",
+  "role": "HEAVY HITTER",
+  "description": "Smash rivals with a heavy club. Earthquake rattles every enemy standing on your platform; jump to dodge it.",
+  "appearance": { "weapon": "club", "face": "angry", "accent": "#9a6c3b", "headRadius": 19, "height": 1.08, "lineWidth": 3.5 },
+  "stats": { "speed": 270, "jumpSpeed": 680, "weight": 1.4 },
+  "attack": { "kind": "melee", "name": "Club smash", "damage": 17, "knockback": 440, "growth": 4.5, "cooldown": 0.7, "windup": 0.2, "duration": 0.4, "range": 108 },
+  "ultra": { "kind": "quake", "name": "Earthquake", "damage": 26, "knockback": 440, "growth": 4.4, "duration": 0.9, "range": 900, "count": 1 }
+}

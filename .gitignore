@@ -1,0 +1,18 @@
+node_modules/
+dist/
+.sites-runtime/
+coverage/
+*.log
+.DS_Store
+
+# Original reference photographs stay local; the game uses vector artwork.
+/*.jpeg
+/src/characters/*/reference.jpeg
+
+# Local configuration and credentials are not published.
+.env
+.env.*
+!.env.example
+.codex/
+.agents/
+.aws/

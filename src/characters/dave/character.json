@@ -1,0 +1,14 @@
+{
+  "id": "dave",
+  "name": "Dave",
+  "order": 6,
+  "playable": true,
+  "unlock": { "boss": "dave" },
+  "tagline": "Small crown. Slippery tactics.",
+  "role": "SLIME SCRAPPER",
+  "description": "Beat boss Dave to recruit him. Poke with long claws and control a small patch of the stage with slowing slime. Normal size, normal lives, no boss armor.",
+  "appearance": { "weapon": "claws", "face": "slime", "accent": "#719d38", "headRadius": 18, "height": 1, "lineWidth": 3.1 },
+  "stats": { "speed": 310, "jumpSpeed": 710, "weight": 1.08 },
+  "attack": { "kind": "melee", "name": "Magic claws", "damage": 11, "knockback": 320, "growth": 3.4, "cooldown": 0.46, "windup": 0.14, "duration": 0.34, "range": 110 },
+  "ultra": { "kind": "slime-bomb", "name": "Slime bomb", "damage": 18, "knockback": 270, "growth": 3.2, "duration": 1.15, "range": 90, "count": 1, "slowDuration": 1.1, "puddleDuration": 2.5 }
+}

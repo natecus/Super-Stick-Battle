@@ -1,0 +1,50 @@
+{
+  "id": "robot",
+  "name": "Robot",
+  "order": 8,
+  "tagline": "Beep. Boop. Bring it.",
+  "role": "LASER ENGINEER",
+  "description": "Beat Robot to recruit him. Fire quick laser bolts and activate hover boots for a launch and four seconds of slow descent. Hold down to land.",
+  "appearance": {
+    "weapon": "blaster",
+    "face": "robot",
+    "accent": "#458b9c",
+    "headRadius": 19,
+    "height": 1.04,
+    "lineWidth": 3
+  },
+  "stats": {
+    "speed": 300,
+    "jumpSpeed": 660,
+    "weight": 1.18
+  },
+  "attack": {
+    "kind": "projectile",
+    "name": "Laser beam",
+    "damage": 10,
+    "knockback": 260,
+    "growth": 3.1,
+    "cooldown": 0.57,
+    "windup": 0.18,
+    "duration": 0.36,
+    "range": 770,
+    "speed": 1050,
+    "radius": 7,
+    "projectile": "laser"
+  },
+  "ultra": {
+    "kind": "hover",
+    "name": "Hover boots",
+    "damage": 1,
+    "knockback": 1,
+    "growth": 0,
+    "duration": 0.9,
+    "range": 20,
+    "count": 1,
+    "hoverDuration": 4
+  },
+  "playable": true,
+  "unlock": {
+    "boss": "robot"
+  }
+}

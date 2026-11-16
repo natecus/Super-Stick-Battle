@@ -1,0 +1,12 @@
+{
+  "id": "swordsman",
+  "name": "Swordsman",
+  "order": 1,
+  "tagline": "Small sword. Big attitude.",
+  "role": "FAST BRAWLER",
+  "description": "The fastest fighter. Close the gap, land quick slashes, and send rivals flying. A spinning ultra hits on both sides.",
+  "appearance": { "weapon": "sword", "face": "smile", "accent": "#d97043", "headRadius": 17, "height": 1, "lineWidth": 3.1 },
+  "stats": { "speed": 380, "jumpSpeed": 680, "weight": 1.12 },
+  "attack": { "kind": "melee", "name": "Sword slash", "damage": 12, "knockback": 380, "growth": 4.3, "cooldown": 0.34, "windup": 0.06, "duration": 0.22, "range": 100 },
+  "ultra": { "kind": "spin", "name": "Sword spin", "damage": 9, "knockback": 250, "growth": 2.5, "duration": 1.15, "range": 112, "count": 4 }
+}

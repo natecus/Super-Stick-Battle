@@ -1,0 +1,12 @@
+{
+  "id": "archer",
+  "name": "Archer",
+  "order": 2,
+  "tagline": "Draw. Aim. Doodle.",
+  "role": "QUICK & RANGED",
+  "description": "Keep your distance with quick arrows. Rain an ultra volley over your rival.",
+  "appearance": { "weapon": "bow", "face": "smile", "accent": "#4a8061", "headRadius": 17, "height": 1, "lineWidth": 3 },
+  "stats": { "speed": 340, "jumpSpeed": 705, "weight": 0.92 },
+  "attack": { "kind": "projectile", "name": "Bow shot", "damage": 8, "knockback": 240, "growth": 3.5, "cooldown": 0.52, "windup": 0.13, "duration": 0.3, "range": 650, "speed": 790, "radius": 6, "projectile": "arrow" },
+  "ultra": { "kind": "rain", "name": "Arrow rain", "damage": 8, "knockback": 240, "growth": 3, "duration": 1.3, "range": 340, "count": 11 }
+}

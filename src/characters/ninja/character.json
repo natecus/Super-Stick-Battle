@@ -1,0 +1,46 @@
+{
+  "id": "ninja",
+  "name": "Ninja",
+  "order": 9,
+  "tagline": "A blur in the margins.",
+  "role": "SHADOW DUELIST",
+  "description": "Beat Ninja to recruit him. Quick katana cuts and a spinning blade flurry trade reach and weight for speed.",
+  "appearance": {
+    "weapon": "sword",
+    "face": "ninja",
+    "accent": "#71618f",
+    "headRadius": 17,
+    "height": 0.97,
+    "lineWidth": 2.8
+  },
+  "stats": {
+    "speed": 390,
+    "jumpSpeed": 780,
+    "weight": 0.85
+  },
+  "attack": {
+    "kind": "melee",
+    "name": "Katana cut",
+    "damage": 9,
+    "knockback": 290,
+    "growth": 3.4,
+    "cooldown": 0.35,
+    "windup": 0.07,
+    "duration": 0.23,
+    "range": 82
+  },
+  "ultra": {
+    "kind": "spin",
+    "name": "Shadow flurry",
+    "damage": 6,
+    "knockback": 235,
+    "growth": 2.6,
+    "duration": 1.15,
+    "range": 100,
+    "count": 5
+  },
+  "playable": true,
+  "unlock": {
+    "boss": "ninja"
+  }
+}

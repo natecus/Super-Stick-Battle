@@ -1,0 +1,12 @@
+{
+  "id": "wizard",
+  "name": "Wizard",
+  "order": 3,
+  "tagline": "Definitely did the spellwork.",
+  "role": "MAGIC & MAYHEM",
+  "description": "Lob magic from your crescent staff. Charge up a giant fireball for the finale.",
+  "appearance": { "weapon": "staff", "face": "grin", "accent": "#8864aa", "headRadius": 18, "height": 1.02, "lineWidth": 3 },
+  "stats": { "speed": 275, "jumpSpeed": 675, "weight": 1 },
+  "attack": { "kind": "projectile", "name": "Magic blast", "damage": 11, "knockback": 295, "growth": 3.8, "cooldown": 0.68, "windup": 0.17, "duration": 0.38, "range": 700, "speed": 500, "radius": 13, "projectile": "magic" },
+  "ultra": { "kind": "blast", "name": "Giant fireball", "damage": 31, "knockback": 510, "growth": 5.5, "duration": 0.75, "range": 1300, "count": 1 }
+}

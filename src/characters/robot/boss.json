@@ -1,0 +1,54 @@
+{
+  "id": "robot",
+  "name": "Robot",
+  "order": 8,
+  "tagline": "Beep. Boop. Bring it.",
+  "role": "THE METAL MENACE",
+  "description": "Defeat cheese to challenge Robot. Win to unlock the balanced playable version.",
+  "appearance": {
+    "weapon": "blaster",
+    "face": "robot",
+    "accent": "#458b9c",
+    "headRadius": 19,
+    "height": 1.04,
+    "lineWidth": 3
+  },
+  "stats": {
+    "speed": 285,
+    "jumpSpeed": 740,
+    "weight": 2
+  },
+  "attack": {
+    "kind": "projectile",
+    "name": "Laser beam",
+    "damage": 17,
+    "knockback": 345,
+    "growth": 3.1,
+    "cooldown": 0.95,
+    "windup": 0.4,
+    "duration": 0.6,
+    "range": 850,
+    "speed": 1100,
+    "radius": 9,
+    "projectile": "laser"
+  },
+  "ultra": {
+    "kind": "hover",
+    "name": "Hover boots",
+    "damage": 1,
+    "knockback": 1,
+    "growth": 0,
+    "duration": 0.9,
+    "range": 20,
+    "count": 1,
+    "hoverDuration": 5
+  },
+  "playable": false,
+  "boss": {
+    "health": 800,
+    "scale": 1.6,
+    "enrageAt": 0.5,
+    "chargePerSecond": 13,
+    "requires": "cheese"
+  }
+}

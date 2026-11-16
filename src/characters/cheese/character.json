@@ -1,0 +1,51 @@
+{
+  "id": "cheese",
+  "name": "Cheese",
+  "order": 7,
+  "tagline": "Nacho average opponent.",
+  "role": "CHEESY TRICKSTER",
+  "description": "Beat Cheese to recruit him. Nacho cheese blobs slow enemies; Cheese snack removes 22 damage after a windup.",
+  "appearance": {
+    "weapon": "none",
+    "face": "cheese",
+    "accent": "#ba8a2e",
+    "headRadius": 20,
+    "height": 1,
+    "lineWidth": 3
+  },
+  "stats": {
+    "speed": 290,
+    "jumpSpeed": 700,
+    "weight": 1.12
+  },
+  "attack": {
+    "kind": "projectile",
+    "name": "Nacho cheese",
+    "damage": 9,
+    "knockback": 245,
+    "growth": 3,
+    "cooldown": 0.66,
+    "windup": 0.19,
+    "duration": 0.4,
+    "range": 560,
+    "speed": 510,
+    "radius": 14,
+    "projectile": "cheese",
+    "slowDuration": 0.85
+  },
+  "ultra": {
+    "kind": "heal",
+    "name": "Cheese snack",
+    "damage": 1,
+    "knockback": 1,
+    "growth": 0,
+    "duration": 1.05,
+    "range": 20,
+    "count": 1,
+    "healAmount": 22
+  },
+  "playable": true,
+  "unlock": {
+    "boss": "cheese"
+  }
+}

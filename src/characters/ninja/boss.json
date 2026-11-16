@@ -1,0 +1,50 @@
+{
+  "id": "ninja",
+  "name": "Ninja",
+  "order": 9,
+  "tagline": "A blur in the margins.",
+  "role": "THE FINAL SHADOW",
+  "description": "Defeat robot to challenge Ninja. Win to unlock the balanced playable version.",
+  "appearance": {
+    "weapon": "sword",
+    "face": "ninja",
+    "accent": "#71618f",
+    "headRadius": 17,
+    "height": 0.97,
+    "lineWidth": 2.8
+  },
+  "stats": {
+    "speed": 340,
+    "jumpSpeed": 820,
+    "weight": 1.65
+  },
+  "attack": {
+    "kind": "melee",
+    "name": "Katana cut",
+    "damage": 18,
+    "knockback": 360,
+    "growth": 3.6,
+    "cooldown": 0.85,
+    "windup": 0.3,
+    "duration": 0.51,
+    "range": 125
+  },
+  "ultra": {
+    "kind": "spin",
+    "name": "Shadow flurry",
+    "damage": 8,
+    "knockback": 260,
+    "growth": 2.8,
+    "duration": 1.65,
+    "range": 150,
+    "count": 5
+  },
+  "playable": false,
+  "boss": {
+    "health": 950,
+    "scale": 1.45,
+    "enrageAt": 0.55,
+    "chargePerSecond": 15,
+    "requires": "robot"
+  }
+}
