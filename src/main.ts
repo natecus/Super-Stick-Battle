@@ -33,6 +33,7 @@ app.innerHTML = `
         <button class="quiet-button help-button" id="help"><span class="help-icon">?</span> How to play</button>
       </nav>
     </header>
+    <p class="creator-credit">Developed by an 11-year-old.</p>
 
     <div class="page-rule"><span>VOL. 01 / THE NOTEBOOK</span><span>ORIGINAL DOODLES. FRIENDLY RIVALRIES.</span></div>
 
@@ -93,7 +94,7 @@ app.innerHTML = `
           </div>
         </article>`).join('')}</div>
     </section>
-    <footer><span>MADE OF LINES. BUILT FOR RIVALRIES.</span><span>A shared keyboard. A worthy opponent. <span class="footer-star">✳</span></span></footer>
+    <footer><span>MADE OF LINES. BUILT FOR RIVALRIES.</span><span>A shared keyboard. A worthy opponent. <span class="footer-star">✳</span></span><a class="footer-support" href="https://buymeacoffee.com/natecus" target="_blank" rel="noopener noreferrer">Buy me a coffee <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></footer>
     <div class="sr-only" id="announcer" role="status" aria-live="polite"></div>
   </main>
   <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-top"><span class="section-index">A NOTE FROM THE MARGINS</span><button id="close-help" class="close-button" aria-label="Close instructions">×</button></div><h2 id="help-title">A crash course<br>in doodle combat.</h2><p class="help-intro">Two players. One keyboard. Last doodle standing wins.</p><div class="help-rule"><b>01</b><p><strong>Knock them off the page.</strong> Hits build damage. Higher damage means bigger knockback. Leave the arena and lose a life. You each get three.</p></div><div class="help-rule"><b>02</b><p><strong>Find your footing.</strong> Tap jump twice to double jump. Press down (<kbd>S</kbd> / <kbd>↓</kbd>) on a floating platform to drop through, or in the air to fall faster.</p></div><div class="help-rule"><b>03</b><p><strong>Make a little mayhem.</strong> Tap attack for your normal move. Dealing and taking damage fills your ultra meter. When it turns gold, press <kbd>G</kbd> / <kbd>L</kbd> to let it rip.</p></div><div class="help-keys"><div><span class="p1">PLAYER 1</span><p><kbd>A</kbd><kbd>D</kbd> move · <kbd>W</kbd> jump<br><kbd>F</kbd> attack · <kbd>G</kbd> ultra</p></div><div><span class="p2">PLAYER 2</span><p><kbd>←</kbd><kbd>→</kbd> move · <kbd>↑</kbd> jump<br><kbd>K</kbd> attack · <kbd>L</kbd> ultra</p></div></div><p class="help-footnote"><kbd>Esc</kbd> pauses. Switching away pauses automatically. Some keyboards limit simultaneous keys; if an input is missed, release extra keys or try a keyboard with better key rollover.</p><button class="primary-button" id="got-it">GOT IT. PENCILS UP. <span>↗</span></button></dialog>
