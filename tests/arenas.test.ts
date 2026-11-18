@@ -22,6 +22,20 @@ function stand(m: Match, f: Fighter, index: number, offset = m.platforms[index].
 }
 
 describe('arena progression and lifecycle', () => {
+  it.each(bosses)('locks $name to its home from the lobby through retries even with every arena unlocked', boss => {
+    const m = new Match(sword, sword, boss, () => true, () => true, () => true);
+    m.selectArena('cheese-land'); m.setMode('boss');
+    const home = arenaForBoss(boss.id);
+    const assertLocked = () => {
+      for (const arena of arenas) expect(m.selectArena(arena.id)).toBe(false);
+      expect(m.arena.id).toBe(home.id);
+      expect(arenas.filter(a => m.arenaAvailable(a))).toEqual([home]);
+    };
+    assertLocked(); m.start(); assertLocked(); tick(m, 3.01); assertLocked();
+    m.pause(); assertLocked(); m.start(); assertLocked(); m.lobby(); assertLocked();
+    m.setMode('duel'); expect(m.arena.id).toBe('cheese-land');
+    for (const arena of arenas) expect(m.selectArena(arena.id)).toBe(true);
+  });
   it('unlocks each home arena from existing version-one boss saves', () => {
     let saved: string | null = null;
     const storage = { getItem: (key: string) => key === PROGRESS_KEY ? saved : null, setItem: (_key: string, value: string) => { saved = value; } };
@@ -128,6 +142,8 @@ describe('moving surfaces and environmental hazards', () => {
     m.step(STEP); expect(f.damage).toBe(12); expect(f.vy).toBeLessThan(0); expect(f.charge).toBe(0);
     stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(12);
     f.arenaHitCooldown = 0; f.invulnerable = 1; stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(12);
+    f.invulnerable = 0; f.invisible = 1; stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(12);
+    f.invisible = 0; stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(24);
     expect(spikeState(strip, 4.1).height).toBe(0);
   });
 

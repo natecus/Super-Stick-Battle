@@ -31,7 +31,7 @@ export class KeyboardInput {
   consume(): [InputFrame, InputFrame] {
     if (!this.enabled) { this.clear(); return [emptyInput(), emptyInput()]; }
     const frames = BINDINGS.map(b => ({
-      left: this.held.has(b.left), right: this.held.has(b.right), down: this.held.has(b.down),
+      left: this.held.has(b.left), right: this.held.has(b.right), up: this.held.has(b.jump), down: this.held.has(b.down),
       jump: this.pressed.has(b.jump), attack: this.pressed.has(b.attack), ultra: this.pressed.has(b.ultra),
     })) as [InputFrame, InputFrame];
     this.pressed.clear();

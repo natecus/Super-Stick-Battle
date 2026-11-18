@@ -51,7 +51,7 @@ export const arenas: ArenaDefinition[] = [
       { x: 615, y: 426, width: 42, height: 98, solid: 'wall', motion: { axis: 'x', amplitude: 265, period: 11, phase: Math.PI / 2 } },
     ], spikes: [{ x: 270, y: 524, width: 85, phase: 0 }, { x: 930, y: 524, width: 85, phase: 2.4 }] },
   { id: 'moonlit-dojo', name: 'Moonlit Dojo', boss: 'ninja', accent: '#7c6e9b',
-    description: 'A moonlit rooftop dojo, bamboo, lanterns, and a gently swaying rope bridge. Watch for a vanishing Ninja.',
+    description: 'A moonlit rooftop dojo, bamboo, lanterns, and a gently swaying rope bridge. Watch for an untouchable Ninja.',
     platforms: [
       { x: 225, y: 524, width: 830, main: true }, { x: 255, y: 382, width: 180 }, { x: 845, y: 382, width: 180 },
       { x: 540, y: 218, width: 200 },

@@ -13,7 +13,7 @@ function tick(match: Match, seconds: number, frames: [InputFrame, InputFrame] = 
 function battle(coop = false) {
   const match = new Match(dave, sword, boss, undefined, () => true);
   if (coop) match.setMode('boss');
-  match.selectArena('notebook'); match.start(); tick(match, 3.01); return match;
+  match.start(); tick(match, 3.01); return match;
 }
 
 describe('playable Dave balance', () => {
@@ -88,11 +88,12 @@ describe('playable Dave balance', () => {
 
   it('keeps allied Dave claws, slime damage, and slowing effects off teammates', () => {
     const match = battle(true); const player = match.fighters[0], ally = match.fighters[1], enemy = match.boss!;
-    enemy.x = 650; enemy.stun = 100; enemy.cooldown = 999;
+    enemy.x = 580; enemy.stun = 100; enemy.cooldown = 999;
     player.x = 480; ally.x = 540;
     match.step(STEP, [input({ attack: true }), input()]); tick(match, 0.4);
     expect(ally.damage).toBe(0);
-    player.charge = 100; ally.x = 650;
+    // Keep the ally clear of the arena's permanent slime while testing friendly fire.
+    player.charge = 100; ally.x = 580; ally.slowed = 0;
     match.step(STEP, [input({ ultra: true }), input()]); tick(match, 1.5);
     expect(enemy.health).toBeLessThan(500);
     expect(ally.damage).toBe(0); expect(ally.slowed).toBe(0); expect(ally.charge).toBe(0);

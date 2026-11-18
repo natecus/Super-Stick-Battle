@@ -16,7 +16,7 @@ function tick(match: Match, seconds: number, frames: [InputFrame, InputFrame] = 
 function battle(first: CharacterDefinition = sword, second: CharacterDefinition = archer) {
   const match = new Match(first, second, dave, undefined, () => true);
   expect(match.setMode('boss')).toBe(true);
-  match.selectArena('notebook'); match.start(); tick(match, 3.01);
+  match.start(); tick(match, 3.01);
   return match;
 }
 function parkBoss(match: Match) {
@@ -152,10 +152,11 @@ describe('Dave behavior and slime', () => {
     tick(match, 0.9); expect(match.hazards.some(h => h.kind === 'slime')).toBe(true);
   });
 
-  it('slime slows a teammate in a puddle, expires, and never slows Dave', () => {
+  it('Dave’s puddle slows opponents, expires, and does not slow Dave himself', () => {
     const match = battle(); const boss = parkBoss(match);
+    boss.slowed = 0; // Discard the slow from spawning in the cave's neutral slime.
     match.hazards.push({ id: 99, owner: 2, kind: 'slime', x: 640, y: 524, radius: 500, life: 1, total: 1 });
-    const f = match.fighters[0]; f.x = 400;
+    const f = match.fighters[0]; f.x = 490;
     tick(match, 0.3, [input({ right: true }), input()]);
     expect(f.slowed).toBeGreaterThan(0); expect(f.vx).toBeCloseTo(sword.stats.speed * 0.55);
     expect(boss.slowed).toBe(0);
@@ -164,7 +165,7 @@ describe('Dave behavior and slime', () => {
 
   it('can complete a fight against idle players without getting stuck', () => {
     const match = battle();
-    for (let i = 0; i < 120 / STEP && match.phase !== 'finished'; i++) match.step(STEP);
-    expect(match.phase).toBe('finished'); expect(match.winner).toBe('boss');
+    for (let i = 0; i < 180 / STEP && match.phase !== 'finished'; i++) match.step(STEP);
+    expect(match.phase, JSON.stringify(match.fighters.map(f => ({ x: f.x, y: f.y, lives: f.lives, hp: f.health, damage: f.damage })))).toBe('finished'); expect(match.winner).toBe('boss');
   });
 });

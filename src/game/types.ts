@@ -59,13 +59,14 @@ export interface CharacterDefinition {
 export interface InputFrame {
   left: boolean;
   right: boolean;
+  up: boolean;
   down: boolean;
   jump: boolean;
   attack: boolean;
   ultra: boolean;
 }
 
-export const emptyInput = (): InputFrame => ({ left: false, right: false, down: false, jump: false, attack: false, ultra: false });
+export const emptyInput = (): InputFrame => ({ left: false, right: false, up: false, down: false, jump: false, attack: false, ultra: false });
 
 export interface AttackState {
   ultra: boolean;
@@ -86,6 +87,7 @@ export interface Fighter {
   maxHealth: number;
   slowed: number;
   hovering: number;
+  /** Shadow form: partially visible and immune to hits until this timer expires. */
   invisible: number;
   arenaHitCooldown: number;
   character: CharacterDefinition;

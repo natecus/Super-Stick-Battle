@@ -74,13 +74,13 @@ To change mode or characters during a match, pause and choose **Change fighters*
 | Dave (unlockable fighter) | Long-reaching claws with moderate damage and a readable windup | One smaller slime bomb with a brief slowing effect and short-lived puddle |
 | Dave (boss opponent) | Powerful magic claws with a visible windup | Slime bombs leave temporary puddles that slow players |
 | Cheese (unlockable) | Nacho cheese blobs slow enemies briefly | Cheese snack removes 22 damage after a windup; cannot restore lives |
-| Robot (unlockable) | Fast straight laser bolts | Hover boots launch upward and slow descent for four seconds; hold down to descend |
-| Ninja (unlockable) | Quick, short-range katana cuts; fast and lightweight | Vanish hides him for five seconds; attacking or taking a hit reveals him |
+| Robot (unlockable) | Fast straight laser bolts | Flight boots grant four seconds of flight: hold W / ↑ to rise, S / ↓ to descend, release to hover; steer and fire in the air |
+| Ninja (unlockable) | Quick, short-range katana cuts; fast and lightweight | Shadow form makes him translucent and immune to hits for five seconds while he can still move and attack |
 | Boxer | Quick close-range punches | A large glove flies straight ahead with powerful knockback |
 
 ### Unlockable arenas
 
-Boss encounters start in their home arena. Win to use that arena in Versus or any available boss replay. Choose an arena above the battle screen while in the lobby. Rematches keep it; returning to Versus restores your last Versus choice. Existing saved boss victories automatically unlock their arenas.
+Boss encounters are locked to their home arena, including the lobby and rematches. Win to use that arena in Versus, where you can choose an unlocked arena above the battle screen before starting. Returning to Versus restores your last Versus choice. Existing saved boss victories automatically unlock their arenas.
 
 | Arena | Unlock | Features |
 | --- | --- | --- |
@@ -90,7 +90,7 @@ Boss encounters start in their home arena. Win to use that arena in Versus or an
 | The Lab | Defeat Robot | Three vertical lifts, alternating spikes with flashing warnings, and a moving striped wall that pushes toward them. Jump over the wall or land on top |
 | Moonlit Dojo | Defeat Ninja | Pagoda rooftops, bamboo, moonlight, lanterns, and a gently swaying rope bridge |
 
-Moving platforms carry their riders. Spikes deal 12 damage with knockback and a brief repeat-hit cooldown. Environmental hazards affect both teams and do not charge ultras. Arena motion and hazard timers freeze on pause and reset on restart. Ninja’s invisibility also hides his marker and shadow; boss AI cannot track hidden players, but attacks and spikes can still hit them.
+Moving platforms carry their riders. Spikes deal 12 damage with knockback and a brief repeat-hit cooldown. Environmental hazards affect both teams and do not charge ultras. Arena motion and hazard timers freeze on pause and reset on restart. Ninja's Shadow form leaves his body faintly visible and his marker readable. It prevents hits and hazard damage until it expires; falling off the page still costs a life.
 
 ### Boss Battle
 
@@ -98,14 +98,14 @@ Both players fight on the same team, with **no friendly fire**. Drain the boss's
 
 | Boss | Requirement to challenge | Health | What to watch for |
 | --- | --- | --- | --- |
-| Robot | Available immediately | 800 HP | Lasers and five seconds of hover boots |
-| Ninja | Defeat Robot | 950 HP | Fast katana attacks and a 4.5-second invisibility ultra |
+| Robot | Available immediately | 800 HP | Lasers and five seconds of flight |
+| Ninja | Defeat Robot | 950 HP | Fast katana attacks and a 4.5-second translucent, untouchable Shadow form |
 | Cheese | Defeat Ninja | 650 HP | Slowing cheese blobs and a 35 HP healing snack |
 | Dave | Defeat Cheese | 500 HP | Claws and slowing slime bombs |
 
 The boss ladder shows locked, ready, and defeated encounters. Each victory recruits that fighter, unlocks their home arena, and opens the next challenge. **Next boss** returns to the lobby so you can select newly unlocked teammates before starting. Rematch keeps the same opponent; defeated bosses remain available to replay. Completing Dave unlocks the full roster and all arenas. Boxer is available from the start.
 
-Bosses chase players and jump between platforms; ranged bosses try to keep firing distance. Watch attack warnings, dodge projectiles, and land a hit to reveal an invisible Ninja. Boss attacks have armor, so hitting them does not interrupt the windup. When enraged, bosses move and charge their ultras faster. Knocking a boss off the page removes 70 HP; surviving bosses return. Players keep their usual damage, knockback, and respawn rules.
+Bosses chase players and jump between platforms; ranged bosses try to keep firing distance. Watch attack warnings, dodge projectiles, and avoid Ninja until his Shadow form expires. Boss attacks have armor, so hitting them does not interrupt the windup. When enraged, bosses move and charge their ultras faster. Knocking a boss off the page removes 70 HP; surviving bosses return. Players keep their usual damage, knockback, and respawn rules.
 
 ### Unlock playable bosses
 
@@ -113,7 +113,7 @@ Win an available boss encounter. The victory screen announces the unlocked fight
 
 Playable Dave has ordinary size, three lives, normal knockback and interruptible attacks, and earns ultra charge through combat. His claws reach slightly farther than the Swordsman's, but are slower and deal less damage and knockback. His slime ultra deals 18 damage in a 90-pixel radius, slows direct hits for 1.1 seconds, and leaves a puddle for 2.5 seconds. Jump clear of the puddle to avoid continued slowing. The boss keeps his original stats and behavior.
 
-All four playable versions have ordinary size, three lives, interruptible attacks, and combat-earned ultra charge. Cheese's snack reduces damage instead of healing boss HP. Robot's hover does not grant invulnerability or extra jumps, ends on knockout, and pauses with the match. The short hover duration keeps the drawing's flight idea suited to the arena.
+All four playable versions have ordinary size, three lives, interruptible attacks, and combat-earned ultra charge. Cheese's snack reduces damage instead of healing boss HP. Robot automatically takes off briefly when Flight boots activate, then uses held vertical controls and hovers when released. He remains vulnerable, and gravity returns when flight expires. Flight and Shadow form pause with the match and clear on knockout or restart.
 
 Unlocks save automatically **in the browser at the game address you use**. Both local players share that save. Different computers, browser profiles, or addresses (for example `localhost` versus your LAN IP) have separate progress. Clearing site data clears unlocks. If browser saving is unavailable, rewards remain available for the current session and the game says so. **Existing victories keep their fighters, arenas, and boss replays unlocked. New victories follow Robot → Ninja → Cheese → Dave.**
 

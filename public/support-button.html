@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Buy me a pizza</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+      body { box-sizing: border-box; display: flex; align-items: center; justify-content: flex-end; padding: 6px; }
+      a:focus-visible { outline: 3px solid #2865b3; outline-offset: 3px; }
+      .fallback { color: #31342d; font: 14px sans-serif; }
+      .bmc-btn-text { width: auto !important; }
+    </style>
+  </head>
+  <body>
+    <!-- This embed uses document.writeln, so it needs its own document rather than the game's dynamic markup. -->
+    <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="natecus" data-color="#FFDD00" data-emoji="🍕" data-font="Cookie" data-text="Buy me a pizza" data-outline-color="#000000" data-font-color="#000000" data-coffee-color="#ffffff"></script>
+    <a class="fallback" href="https://www.buymeacoffee.com/natecus" target="_blank" rel="noopener noreferrer">🍕 Buy me a pizza</a>
+    <script>
+      const button = document.querySelector('.bmc-btn');
+      if (button) {
+        button.rel = 'noopener noreferrer';
+        button.setAttribute('aria-label', 'Buy me a pizza (opens in a new tab)');
+        document.querySelector('.fallback').remove();
+      }
+    </script>
+  </body>
+</html>

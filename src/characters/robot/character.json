@@ -4,7 +4,7 @@
   "order": 7,
   "tagline": "Beep. Boop. Bring it.",
   "role": "LASER ENGINEER",
-  "description": "Beat Robot to recruit him. Fire quick laser bolts and activate hover boots for a launch and four seconds of slow descent. Hold down to land.",
+  "description": "Beat Robot to recruit him. Fire quick laser bolts and fly for four seconds with Flight boots. Hold jump to rise, down to descend, and release to hover.",
   "appearance": {
     "weapon": "blaster",
     "face": "robot",
@@ -34,7 +34,7 @@
   },
   "ultra": {
     "kind": "hover",
-    "name": "Hover boots",
+    "name": "Flight boots",
     "damage": 1,
     "knockback": 1,
     "growth": 0,

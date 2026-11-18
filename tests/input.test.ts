@@ -28,6 +28,10 @@ describe('shared keyboard', () => {
     const next = keyboard.consume();
     expect(next[0].right).toBe(true); expect(next[1].left).toBe(true);
     expect(next[0].jump).toBe(false); expect(next[1].attack).toBe(false);
+    expect(first[0].up).toBe(true); expect(next[0].up).toBe(true);
+    key('keyup', 'KeyW'); expect(keyboard.consume()[0].up).toBe(false);
+    key('keydown', 'ArrowUp'); keyboard.consume(); expect(keyboard.consume()[1].up).toBe(true);
+    key('keyup', 'ArrowUp'); expect(keyboard.consume()[1].up).toBe(false);
   });
 
   it('ignores key autorepeat, but a release and second press permits a double jump', () => {

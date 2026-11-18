@@ -55,11 +55,13 @@ export class Match {
   get selectedBoss(): CharacterDefinition | undefined { return this.bossDefinition; }
   get arena(): ArenaDefinition { return this.selectedArena; }
   arenaAvailable(arena: ArenaDefinition): boolean {
-    return this.canSelectArena(arena) || this.mode === 'boss' && arena.boss === this.bossDefinition?.id && this.canChallenge(this.bossDefinition!);
+    return this.mode === 'boss'
+      ? arena.id === arenaForBoss(this.bossDefinition!.id).id && this.canChallenge(this.bossDefinition!)
+      : this.canSelectArena(arena);
   }
   selectArena(id: string): boolean {
     const arena = arenas.find(a => a.id === id);
-    if (this.phase !== 'lobby' || !arena || !this.arenaAvailable(arena)) return false;
+    if (this.mode !== 'duel' || this.phase !== 'lobby' || !arena || !this.arenaAvailable(arena)) return false;
     this.selectedArena = arena;
     if (this.mode === 'duel') this.duelArena = arena.id;
     this.lobby();
@@ -185,7 +187,6 @@ export class Match {
   }
 
   private event(type: 'jump' | 'land' | 'hit' | 'ko' | 'shot' | 'ultra' | 'enrage', f: Fighter, intensity = 1) {
-    if (f.invisible > 0 && (type === 'jump' || type === 'land' || type === 'enrage')) return;
     this.events.push({ type, x: f.x, y: type === 'jump' || type === 'land' ? f.y : f.y - 45, player: f.player, intensity });
   }
 
@@ -231,7 +232,7 @@ export class Match {
         f.y += 3;
         f.vy = 100;
       }
-      if (f.jumpBuffer > 0 && (f.jumps < 2 || f.coyote > 0)) {
+      if (f.hovering === 0 && f.jumpBuffer > 0 && (f.jumps < 2 || f.coyote > 0)) {
         // Walking off a ledge spends the ground jump; one recovery jump remains.
         if (!f.grounded && f.coyote === 0 && f.jumps === 0) f.jumps = 1;
         f.vy = -f.character.stats.jumpSpeed * (f.jumps > 0 ? 0.94 : 1);
@@ -242,7 +243,9 @@ export class Match {
         f.jumpBuffer = 0;
         this.event('jump', f);
       }
-      if (input.ultra && f.charge >= 100 && !f.attack && (f.character.ultra.kind !== 'quake' || f.grounded) && !(f.character.ultra.kind === 'invisibility' && f.invisible > 0)) this.beginAttack(f, true);
+      if (input.ultra && f.charge >= 100 && !f.attack && (f.character.ultra.kind !== 'quake' || f.grounded)
+        && !(f.character.ultra.kind === 'invisibility' && f.invisible > 0)
+        && !(f.character.ultra.kind === 'hover' && f.hovering > 0)) this.beginAttack(f, true);
       else if (input.attack && f.cooldown === 0 && !f.attack) this.beginAttack(f, false);
     } else {
       f.vx *= Math.pow(0.93, dt);
@@ -251,11 +254,17 @@ export class Match {
     const lastY = f.y;
     const lastX = f.x;
     const wasGrounded = f.grounded;
-    f.vy = Math.min(1100, f.vy + GRAVITY * dt * (input.down && f.vy > 0 ? 1.8 : 1));
-    // Boots soften descent without granting invulnerability or unlimited jumps.
-    if (f.hovering > 0 && f.stun === 0 && !input.down) f.vy = Math.min(f.vy, 55);
+    const flying = f.hovering > 0 && f.stun === 0;
+    if (flying) {
+      // Brief automatic takeoff, then hold jump to ascend, down to descend, or release to hover.
+      const takingOff = f.hovering > (f.character.ultra.hoverDuration ?? 4) - 0.45;
+      f.vy = input.down ? 260 : input.up || input.jump || takingOff ? -260 : 0;
+      f.coyote = 0; f.jumpBuffer = 0; f.jumps = Math.max(1, f.jumps);
+    } else f.vy = Math.min(1100, f.vy + GRAVITY * dt * (input.down && f.vy > 0 ? 1.8 : 1));
     f.x += f.vx * dt;
     f.y += f.vy * dt;
+    const flightCeiling = Math.max(150, BODY_HEIGHT * f.size + 30);
+    if (flying && f.y < flightCeiling && f.vy < 0) { f.y = flightCeiling; f.vy = 0; }
     f.grounded = false;
     f.platform = null;
     {
@@ -329,7 +338,6 @@ export class Match {
     f.cooldown = (ultra ? move.duration + (f.player === 2 ? 0.45 : 0.25) : f.character.attack.cooldown) * (f.player === 2 && this.bossEnraged ? 0.8 : 1);
     // Choosing to attack ends respawn protection.
     f.invulnerable = 0;
-    f.invisible = 0;
     if (ultra) {
       f.charge = 0;
       this.event('ultra', f, 2);
@@ -365,7 +373,7 @@ export class Match {
             f.invisible = move.invisibleDuration ?? 5;
           } else {
             f.hovering = move.hoverDuration ?? 4;
-            f.vy = -380;
+            f.vy = -260;
             f.grounded = false; f.platform = null; f.coyote = 0;
             f.jumps = Math.max(1, f.jumps);
           }
@@ -544,7 +552,7 @@ export class Match {
     }
   }
 
-  private canHit(f: Fighter) { return f.lives > 0 && f.respawn === 0 && f.invulnerable === 0; }
+  private canHit(f: Fighter) { return f.lives > 0 && f.respawn === 0 && f.invulnerable === 0 && f.invisible === 0; }
 
   private hit(target: Fighter, attacker: Fighter | null, damage: number, base: number, growth: number, direction: number, ultra: boolean) {
     target.invisible = 0;

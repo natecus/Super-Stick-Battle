@@ -94,7 +94,7 @@ app.innerHTML = `
           </div>
         </article>`).join('')}</div>
     </section>
-    <footer><span>MADE OF LINES. BUILT FOR RIVALRIES.</span><span>A shared keyboard. A worthy opponent. <span class="footer-star">✳</span></span><a class="footer-support" href="https://buymeacoffee.com/natecus" target="_blank" rel="noopener noreferrer">Buy me a coffee <span aria-hidden="true">↗</span><span class="sr-only"> (opens in a new tab)</span></a></footer>
+    <footer><span>MADE OF LINES. BUILT FOR RIVALRIES.</span><span>A shared keyboard. A worthy opponent. <span class="footer-star">✳</span></span><iframe class="footer-support" src="./support-button.html" title="Buy me a pizza on Buy Me a Coffee" width="280" height="76" loading="lazy" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox"></iframe></footer>
     <div class="sr-only" id="announcer" role="status" aria-live="polite"></div>
   </main>
   <dialog id="help-dialog" aria-labelledby="help-title"><div class="dialog-top"><span class="section-index">A NOTE FROM THE MARGINS</span><button id="close-help" class="close-button" aria-label="Close instructions">×</button></div><h2 id="help-title">A crash course<br>in doodle combat.</h2><p class="help-intro">Two players. One keyboard. Last doodle standing wins.</p><div class="help-rule"><b>01</b><p><strong>Knock them off the page.</strong> Hits build damage. Higher damage means bigger knockback. Leave the arena and lose a life. You each get three.</p></div><div class="help-rule"><b>02</b><p><strong>Find your footing.</strong> Tap jump twice to double jump. Press down (<kbd>S</kbd> / <kbd>↓</kbd>) on a floating platform to drop through, or in the air to fall faster.</p></div><div class="help-rule"><b>03</b><p><strong>Make a little mayhem.</strong> Tap attack for your normal move. Dealing and taking damage fills your ultra meter. When it turns gold, press <kbd>G</kbd> / <kbd>L</kbd> to let it rip.</p></div><div class="help-keys"><div><span class="p1">PLAYER 1</span><p><kbd>A</kbd><kbd>D</kbd> move · <kbd>W</kbd> jump<br><kbd>F</kbd> attack · <kbd>G</kbd> ultra</p></div><div><span class="p2">PLAYER 2</span><p><kbd>←</kbd><kbd>→</kbd> move · <kbd>↑</kbd> jump<br><kbd>K</kbd> attack · <kbd>L</kbd> ultra</p></div></div><p class="help-footnote"><kbd>Esc</kbd> pauses. Switching away pauses automatically. Some keyboards limit simultaneous keys; if an input is missed, release extra keys or try a keyboard with better key rollover.</p><button class="primary-button" id="got-it">GOT IT. PENCILS UP. <span>↗</span></button></dialog>
@@ -106,7 +106,7 @@ const match = new Match(playableCharacters[0], playableCharacters[1] ?? playable
 const keyboard = new KeyboardInput();
 const sound = new SketchAudio();
 const dialog = get<HTMLDialogElement>('help-dialog');
-dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule boss-instructions"><b>04</b><p><strong>Climb the boss ladder together.</strong> Defeat ' + bosses.map(boss => escape(boss.name)).join(' &rarr; ') + ' in order. Each win unlocks that fighter and their home arena, and opens the next boss. Choose unlocked arenas in either mode. You each have three lives and no friendly fire. Drain the boss’s health to win; one surviving teammate can finish. Bosses warn before attacks, have attack armor, and speed up when enraged. Replay any available boss from the ladder.</p></div><p class="help-footnote">Jump clear of Dave’s slime. Cheese throws slowing blobs and heals with Cheese snack. Robot fires lasers and uses temporary hover boots; hold down to descend when playing him. Ninja’s Vanish hides him for up to five seconds; attacking or being hit reveals him. Boxer punches and throws a giant glove with his ultra. Clubber’s Earthquake hits grounded enemies sharing a platform; Boomeranger’s throw hits going out and back.</p>');
+dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule boss-instructions"><b>04</b><p><strong>Climb the boss ladder together.</strong> Defeat ' + bosses.map(boss => escape(boss.name)).join(' &rarr; ') + ' in order. Each win unlocks that fighter and their home arena, and opens the next boss. Choose unlocked arenas in Versus. Boss fights are locked to each boss’s home arena. You each have three lives and no friendly fire. Drain the boss’s health to win; one surviving teammate can finish. Bosses warn before attacks, have attack armor, and speed up when enraged. Replay any available boss from the ladder.</p></div><p class="help-footnote">Jump clear of Dave’s slime. Cheese throws slowing blobs and heals with Cheese snack. Robot’s Flight boots grant real flight: hold W / up arrow to rise, S / down arrow to descend, and release to hover. Ninja’s Shadow form makes him translucent and immune to hits for up to five seconds. He can still move and attack. Boxer punches and throws a giant glove with his ultra. Clubber’s Earthquake hits grounded enemies sharing a platform; Boomeranger’s throw hits going out and back.</p>');
 const announcer = get('announcer');
 dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule"><b>05</b><p><strong>Learn each arena.</strong> Slime Caves slows anyone standing in green slime. Ride the cheese clock; its sides knock you away. In The Lab, lifts carry you, flashing strips warn of spikes, and the striped wall pushes you toward them. Jump over it or ride its top. Moonlit Dojo has a gently swaying bridge. Arena hazards affect both teams.</p></div>');
 dialog.querySelector('.boss-instructions p')!.append(' Unlocks are saved in this browser at this game address.');
@@ -119,18 +119,20 @@ let pauseBeforeHelp = false;
 let soundBusy = false;
 
 function updateSelection() {
+  const bossMode = match.mode === 'boss';
+  get('arena-picker-title').textContent = bossMode ? 'BOSS HOME ARENA' : 'CHOOSE YOUR ARENA';
   get('arena-progress').textContent = `${arenas.filter(a => progression.canSelectArena(a)).length} / ${arenas.length} unlocked`;
-  get('arena-description').textContent = match.arena.description;
+  get('arena-description').textContent = (bossMode ? `${match.selectedBoss!.name} always fights in ${match.arena.name}. ` : '') + match.arena.description;
   document.querySelectorAll<HTMLButtonElement>('[data-arena]').forEach(button => {
     const arena = arenas.find(a => a.id === button.dataset.arena)!;
     const unlocked = progression.canSelectArena(arena);
     const available = match.arenaAvailable(arena);
     const selected = match.arena.id === arena.id;
     const boss = bosses.find(b => b.id === arena.boss);
-    button.disabled = match.phase !== 'lobby' || !available;
+    button.disabled = bossMode || match.phase !== 'lobby' || !available;
     button.setAttribute('aria-pressed', String(selected));
     button.classList.toggle('arena-locked', !available);
-    const status = unlocked ? selected ? 'SELECTED' : 'READY TO PLAY' : available ? 'BOSS HOME · WIN TO UNLOCK' : `Beat ${boss?.name} to unlock`;
+    const status = bossMode && selected ? 'BOSS ARENA · FIXED' : unlocked ? bossMode ? 'VERSUS ONLY' : selected ? 'SELECTED' : 'READY TO PLAY' : `Beat ${boss?.name} to unlock`;
     button.querySelector('[data-arena-status]')!.textContent = status;
     button.setAttribute('aria-label', `${arena.name}. ${status}. ${arena.description}`);
   });
@@ -188,7 +190,7 @@ function refresh() {
     charge.setAttribute('aria-valuenow', String(Math.floor(f.charge)));
     (charge.firstElementChild as HTMLElement).style.width = `${f.charge}%`;
     charge.classList.toggle('ready', f.charge >= 100);
-    get(`ultra-label-${p}`).textContent = f.invisible > 0 ? `INVISIBLE ${Math.ceil(f.invisible)}s` : f.charge >= 100 ? 'ULTRA READY!' : f.character.ultra.name.toUpperCase();
+    get(`ultra-label-${p}`).textContent = f.invisible > 0 ? `UNTOUCHABLE ${Math.ceil(f.invisible)}s` : f.hovering > 0 ? `FLIGHT ${Math.ceil(f.hovering)}s` : f.charge >= 100 ? 'ULTRA READY!' : f.character.ultra.name.toUpperCase();
     get(`name-${p}`).closest('.player-hud')!.classList.toggle('player-eliminated', f.lives === 0);
   });
   const boss = match.boss;
@@ -203,10 +205,10 @@ function refresh() {
     get('boss-hud').classList.toggle('enraged', match.bossEnraged && boss.health > 0);
     get('boss-status').textContent = `${match.bossEnraged && boss.health > 0 ? 'ENRAGED · ' : ''}${Math.ceil(boss.health)} / ${boss.maxHealth} HP`;
     const ultraTip = boss.character.ultra.kind === 'heal' ? 'Healing windup! Keep the pressure on.'
-      : boss.character.ultra.kind === 'hover' ? 'Hover boots! Watch for lasers from above.'
-      : boss.character.ultra.kind === 'invisibility' ? 'Ninja is about to vanish. A hit will reveal him!' : 'Move away from the marked area.';
+      : boss.character.ultra.kind === 'hover' ? 'Flight boots! Robot can fly and fire lasers.'
+      : boss.character.ultra.kind === 'invisibility' ? 'Ninja is entering Shadow Form. Dodge until it wears off!' : 'Move away from the marked area.';
     get('boss-tip').textContent = boss.health === 0 ? `${boss.character.name} is defeated!` : boss.respawn > 0 ? `${boss.character.name} fell! −70 HP. Coming back…`
-      : boss.invisible > 0 ? `Ninja vanished! ${Math.ceil(boss.invisible)}s left. His next attack or a hit reveals him.`
+      : boss.invisible > 0 ? `Ninja is translucent and cannot be hit! Dodge for ${Math.ceil(boss.invisible)}s.`
       : boss.attack?.ultra ? `${boss.character.ultra.name.toUpperCase()}! ${ultraTip}`
       : boss.attack ? `${boss.character.attack.name.toUpperCase()}! ${boss.character.attack.kind === 'projectile' ? 'Jump out of the firing line.' : 'Jump or back away.'}`
       : match.fighters.some(f => f.player !== 2 && f.slowed > 0) ? 'Slowed! Dodge blobs and jump clear of slime puddles.'
@@ -230,7 +232,7 @@ function refresh() {
     nextButton.textContent = next ? `NEXT BOSS: ${next.name.toUpperCase()} ↗` : '';
     get('rematch').classList.toggle('secondary-rematch', Boolean(next));
     get('unlock-reward').hidden = rewards.length === 0;
-    get('unlock-reward').innerHTML = rewards.length ? `<strong>✦ ${escape(rewardNames.toUpperCase())} UNLOCKED!</strong><span>Both players can now choose ${escape(rewardNames)}. ${escape(arenaForBoss(match.boss!.character.id).name)} is also unlocked!</span><small>${progression.saved ? 'Saved in this browser. Available in both modes.' : 'Available this session. Browser saving is unavailable.'}</small>` : '';
+    get('unlock-reward').innerHTML = rewards.length ? `<strong>✦ ${escape(rewardNames.toUpperCase())} UNLOCKED!</strong><span>Both players can now choose ${escape(rewardNames)}. ${escape(arenaForBoss(match.boss!.character.id).name)} is also unlocked for Versus!</span><small>${progression.saved ? 'Saved in this browser. Available in both modes.' : 'Available this session. Browser saving is unavailable.'}</small>` : '';
     get('result-choose').textContent = rewards.length ? `Choose ${rewardNames} — back to fighter select` : 'Back to fighter select';
     previousPhase = match.phase;
     previousMode = match.mode;

@@ -18,7 +18,7 @@ function tick(match: Match, seconds: number) { for (let i = 0; i < Math.ceil(sec
 function battle(character: CharacterDefinition, boss?: CharacterDefinition) {
   const match = new Match(character, sword, boss, () => true, () => true);
   if (boss) match.setMode('boss');
-  match.selectArena('notebook'); match.start(); tick(match, 3.01); return match;
+  match.start(); tick(match, 3.01); return match;
 }
 const cheese = characters.find(c => c.id === 'cheese')!;
 const robot = characters.find(c => c.id === 'robot')!;
@@ -35,7 +35,7 @@ describe('progressive boss ladder', () => {
       expect(bosses.filter(b => progress.canChallenge(b)).map(b => b.id)).toEqual(bosses.slice(0, i + 1).map(b => b.id));
       for (const later of bosses.slice(i + 1)) expect(progress.recordResult(win, later.id)).toEqual([]);
       const match = new Match(sword, sword, boss, c => progress.canSelect(c), b => progress.canChallenge(b));
-      match.setMode('boss'); match.selectArena('notebook'); match.start(); tick(match, 3.01);
+      match.setMode('boss'); match.start(); tick(match, 3.01);
       // Earn each reward from an actual final hit with one surviving teammate.
       match.fighters[1].lives = 0;
       match.fighters[0].x = 580; match.fighters[0].facing = 1;
@@ -114,7 +114,7 @@ describe('new boss and playable moves', () => {
   it.each([cheese, robot, ninja])('$name damages the enemy without hitting an ally', character => {
     const match = battle(character, bosses[0]);
     match.fighters[0].x = 450; match.fighters[1].x = 490;
-    const boss = match.boss!; boss.x = 550; boss.cooldown = 999; boss.stun = 100;
+    const boss = match.boss!; boss.x = 550; boss.cooldown = 999; boss.stun = 100; boss.attack = null;
     match.step(STEP, [attack, emptyInput()]); tick(match, 0.55);
     expect(boss.health).toBeLessThan(boss.maxHealth);
     expect(match.fighters[1].damage).toBe(0); expect(match.fighters[1].slowed).toBe(0);
@@ -148,7 +148,7 @@ describe('new boss and playable moves', () => {
     expect(boss.health).toBe(boss.maxHealth);
   });
 
-  it('Robot hover pauses, slows descent, allows attacks, and clears on a knockout or restart', () => {
+  it('Robot takes off, hovers without sinking, can fire in flight, pauses, and clears flight on knockout/restart', () => {
     const match = battle(robot); const player = match.fighters[0];
     player.charge = 100; match.step(STEP, [ultra, emptyInput()]); tick(match, 1.1);
     expect(player.hovering).toBeGreaterThan(3); expect(player.y).toBeLessThan(524);
@@ -156,19 +156,41 @@ describe('new boss and playable moves', () => {
     match.resume(); player.cooldown = 0;
     match.step(STEP, [attack, emptyInput()]); tick(match, 0.2);
     expect(match.projectiles.some(p => p.kind === 'laser')).toBe(true);
-    player.vy = 400; match.step(STEP); expect(player.vy).toBeLessThanOrEqual(55);
+    const altitude = player.y; tick(match, 0.4); expect(player.y).toBe(altitude); expect(player.vy).toBe(0);
     player.x = -200; match.step(STEP); expect(player.hovering).toBe(0);
     match.start(); expect(match.fighters[0].hovering).toBe(0);
   });
 
-  it('hover expires and holding down descends faster', () => {
-    const match = battle(robot); const player = match.fighters[0]; player.hovering = 0.1;
-    player.y = 300; player.vy = 200; player.grounded = false;
-    match.step(STEP, [{ ...emptyInput(), down: true }, emptyInput()]); expect(player.vy).toBeGreaterThan(200);
-    tick(match, 0.2); expect(player.hovering).toBe(0);
+  it('steers flight up, sideways and down, stays on screen, and falls normally after expiry', () => {
+    const match = battle(robot); const player = match.fighters[0]; player.hovering = 3;
+    player.y = 350; player.grounded = false; player.platform = null;
+    const startX = player.x;
+    for (let i = 0; i < 0.4 / STEP; i++) match.step(STEP, [{ ...emptyInput(), up: true, right: true }, emptyInput()]);
+    expect(player.y).toBeLessThan(250); expect(player.x).toBeGreaterThan(startX + 40);
+    const highY = player.y;
+    for (let i = 0; i < 0.2 / STEP; i++) match.step(STEP, [{ ...emptyInput(), down: true }, emptyInput()]);
+    expect(player.y).toBeGreaterThan(highY + 45);
+    for (let i = 0; i < 1 / STEP; i++) match.step(STEP, [{ ...emptyInput(), up: true }, emptyInput()]);
+    expect(player.y).toBe(150); expect(player.lives).toBe(3);
+    player.charge = 100; match.step(STEP, [ultra, emptyInput()]); expect(player.charge).toBe(100);
+    player.hovering = 0.1; tick(match, 0.2);
+    expect(player.hovering).toBe(0); expect(player.y).toBeGreaterThan(150); expect(player.vy).toBeGreaterThan(100);
   });
 
-  it('Ninja boss gives a warning before vanishing without ultra damage', () => {
+  it('Robot boss takes flight and follows heroes to higher platforms', () => {
+    const match = battle(sword, bosses.find(b => b.id === 'robot')!), boss = match.boss!;
+    boss.attack = null; boss.cooldown = 0; boss.charge = 100;
+    match.fighters[0].x = 400; match.fighters[1].lives = 0;
+    const floorY = boss.y; tick(match, 1.1);
+    expect(boss.hovering).toBeGreaterThan(4); expect(boss.y).toBeLessThan(floorY - 80);
+    const before = boss.y;
+    for (let i = 0; i < 0.5 / STEP; i++) {
+      match.fighters[0].y = 235; match.fighters[0].vy = 0; match.step(STEP);
+    }
+    expect(boss.y).toBeLessThan(before - 50);
+  });
+
+  it('Ninja boss gives a warning before Shadow form without ultra damage', () => {
     const match = battle(sword, bosses.find(b => b.id === 'ninja')!); const boss = match.boss!;
     match.fighters[0].x = boss.x - 60; match.fighters[1].x = boss.x + 60; boss.charge = 100;
     tick(match, 0.5); expect(boss.attack?.ultra).toBe(true);

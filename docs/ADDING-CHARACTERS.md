@@ -63,9 +63,8 @@ All ultras require a full meter. Fields common to all: `kind`, `name`, `damage`,
 | `boomerang-burst` | Exploding throw with an impact trigger and short fuse | Explosion radius | Set to 1 |
 | `slime-bomb` | Lobs a slowing bomb toward each living enemy; leaves temporary slime puddles | Explosion/puddle radius | Reserved; one bomb per living enemy |
 | `heal` | After 0.62 seconds, removes player damage or restores boss HP using required `healAmount`; cannot restore lives | Reserved (20) | Set to 1 |
-| `hover` | After 0.62 seconds, launches upward and limits downward speed for required `hoverDuration` seconds; down bypasses the limit | Reserved (20) | Set to 1 |
-
-| `invisibility` | After 0.62 seconds, hides body/marker/shadow for required `invisibleDuration`; an attack or hit reveals the fighter | Reserved (0) | Set to 1 |
+| `hover` | After 0.62 seconds, takes off briefly and enables flight for required `hoverDuration`: hold up to rise, down to descend, release to hover; gravity resumes on expiry | Reserved (20) | Set to 1 |
+| `invisibility` | After 0.62 seconds, renders the body at 35% opacity and prevents hits for required `invisibleDuration`; movement and attacks remain available, marker and shadow stay visible | Reserved (0) | Set to 1 |
 | `glove-throw` | Throws one straight glove at 700 pixels/second after 0.26 seconds; duration must exceed windup | Travel distance | Set to 1 |
 
 Support ultras (`heal`, `hover`, `invisibility`) accept damage/knockback/range values of 0 and growth 0; they do not deal damage. Their animation duration must exceed 0.62 seconds. Boss `spin` ultras also use a 0.62-second warning before the first strike; set their duration above 0.62 seconds.
@@ -94,4 +93,4 @@ Run `npm test` and `npm run build`. Automated tests validate all discovered char
 
 ## Arena definitions
 
-`src/game/arenas.ts` owns home-arena boss IDs, platform geometry and motion, safe starting positions, permanent slime patches, and spike timing. A boss victory unlocks its arena using the same saved defeated-boss IDs. `platformsAt` produces deterministic geometry from match elapsed time; `arena-drawing.ts` renders that exact geometry, and `simulation.ts` resolves riders, solids, and hazards. New arenas need matching drawing support and physics tests. Keep decorative scenery separate from collidable surfaces.
+`src/game/arenas.ts` owns home-arena boss IDs, platform geometry and motion, safe starting positions, permanent slime patches, and spike timing. A boss victory unlocks its arena for Versus using the same saved defeated-boss IDs. Boss mode always uses that boss's home arena; `Match.selectArena` only accepts changes in the Versus lobby. `platformsAt` produces deterministic geometry from match elapsed time; `arena-drawing.ts` renders that exact geometry, and `simulation.ts` resolves riders, solids, and hazards. New arenas need matching drawing support and physics tests. Keep decorative scenery separate from collidable surfaces.

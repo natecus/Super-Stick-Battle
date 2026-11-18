@@ -105,7 +105,7 @@ export class NotebookScene extends Phaser.Scene {
         ctx.fillRect(f.attack.targetX - f.character.ultra.range / 2, 100, f.character.ultra.range, 430);
         ctx.restore();
       }
-      if (f.lives === 0 || f.respawn > 0 || f.invisible > 0) continue;
+      if (f.lives === 0 || f.respawn > 0) continue;
       ctx.save();
       if (f.attack && (f.player === 2 || f.attack.ultra && f.character.ultra.kind === 'slime-bomb')) {
         const warning = f.attack.ultra ? f.attack.elapsed < 0.62 : f.attack.elapsed < f.character.attack.windup;
@@ -130,7 +130,10 @@ export class NotebookScene extends Phaser.Scene {
         ctx.fillStyle = '#4a47351b'; ctx.beginPath(); ctx.ellipse(f.x, f.y - 1, 26, 4, 0, 0, Math.PI * 2); ctx.fill();
       }
       const celebrating = this.match.phase === 'finished' && (this.match.winner === f.player || this.match.winner === 'team' && f.player !== 2 || this.match.winner === 'boss' && f.player === 2);
+      ctx.save();
+      if (f.invisible > 0) ctx.globalAlpha *= 0.35;
       drawCharacter(ctx, f.character, f.x, f.y, f.size, fighterPose(f, this.clock + f.player, celebrating));
+      ctx.restore();
       if (f.hovering > 0) {
         ctx.strokeStyle = '#4fa6b7'; ctx.lineWidth = 2;
         for (const dx of [-15, 16]) for (let i = 0; i < 3; i++) line(ctx, [[f.x + dx * f.size + (i - 1) * 4, f.y + 4], [f.x + dx * f.size + (i - 1) * 6, f.y + 12 + Math.sin(this.clock * 20 + i) * 4]]);
@@ -144,7 +147,10 @@ export class NotebookScene extends Phaser.Scene {
       } else {
         ctx.fillText(`↑ ${marker}`, Math.max(70, Math.min(WIDTH - 50, f.x)), 126);
       }
-      if (f.slowed > 0 || f.hovering > 0) { ctx.fillStyle = f.slowed > 0 ? '#658331' : '#458b9c'; ctx.font = 'bold 11px "Courier New", monospace'; ctx.fillText(f.slowed > 0 ? 'SLOWED!' : `HOVER ${Math.ceil(f.hovering)}s`, f.x, markerY - 16); }
+      if (f.slowed > 0 || f.hovering > 0 || f.invisible > 0) {
+        ctx.fillStyle = f.invisible > 0 ? '#71618f' : f.slowed > 0 ? '#658331' : '#458b9c'; ctx.font = 'bold 11px "Courier New", monospace';
+        ctx.fillText(f.invisible > 0 ? `UNTOUCHABLE ${Math.ceil(f.invisible)}s` : f.slowed > 0 ? 'SLOWED!' : `FLIGHT ${Math.ceil(f.hovering)}s`, f.x, markerY - 16);
+      }
       if (f.charge >= 100) {
         ctx.strokeStyle = '#d2a225'; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.ellipse(f.x, f.y - 42, 36 + Math.sin(this.clock * 5) * 2, 58, 0, 0, Math.PI * 2); ctx.stroke();

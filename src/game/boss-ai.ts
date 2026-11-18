@@ -14,7 +14,7 @@ export class BossBrain {
     this.retargetIn -= dt;
     this.jumpIn = Math.max(0, this.jumpIn - dt);
     if (boss.lives <= 0 || boss.respawn > 0 || boss.stun > 0 || boss.attack) return input;
-    const available = heroes.filter(f => f.lives > 0 && f.respawn === 0 && f.invisible === 0);
+    const available = heroes.filter(f => f.lives > 0 && f.respawn === 0);
     const floors = platforms.filter(p => p.main);
     const safeFloor = floors.reduce((a, b) => Math.abs(boss.x - Math.max(a.x + 35, Math.min(a.x + a.width - 35, boss.x))) < Math.abs(boss.x - Math.max(b.x + 35, Math.min(b.x + b.width - 35, boss.x))) ? a : b);
     const offEdge = !floors.some(p => boss.x >= p.x + 35 && boss.x <= p.x + p.width - 35);
@@ -45,13 +45,20 @@ export class BossBrain {
     if (!boss.attack && Math.abs(dx) > 5) boss.facing = Math.sign(dx);
 
     const obstacle = platforms.some(p => p.solid && boss.y > p.y && boss.y - 93 * boss.size < p.y + (p.height ?? 24) && Math.abs(boss.x - (p.x + p.width / 2)) < p.width / 2 + 95);
-    const needsJump = dy < -65 || (offEdge && boss.y > 440) || obstacle;
-    if (needsJump && this.jumpIn === 0 && (boss.grounded || (boss.jumps < 2 && boss.vy > -150))) {
+    // Use the recovery jump when the first jump falls just short of an occupied ledge.
+    const belowTargetLedge = target.grounded && !boss.grounded && dy < -1;
+    const needsJump = dy < -65 || belowTargetLedge || (offEdge && boss.y > 440) || obstacle;
+    if (boss.hovering > 0) {
+      const takeoff = boss.hovering > (boss.character.ultra.hoverDuration ?? 4) - 0.45;
+      const flightY = target.y - 25;
+      input.up = takeoff || obstacle || boss.y > flightY + 12;
+      input.down = !input.up && boss.y < flightY - 12;
+    } else if (needsJump && this.jumpIn === 0 && (boss.grounded || (boss.jumps < 2 && boss.vy > -150))) {
       input.jump = true;
       this.jumpIn = 0.32;
     }
     if (dy > 65 && boss.grounded && boss.platform !== null && !platforms[boss.platform].main && !platforms[boss.platform].solid) input.down = true;
-    if (!boss.attack && boss.cooldown === 0) {
+    if (!boss.attack && boss.cooldown === 0 && target.invisible === 0) {
       const kind = boss.character.ultra.kind;
       const usefulUltra = kind === 'heal' ? boss.health <= boss.maxHealth - (boss.character.ultra.healAmount ?? 0)
         : kind === 'hover' ? boss.hovering === 0

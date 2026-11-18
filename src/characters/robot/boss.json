@@ -34,7 +34,7 @@
   },
   "ultra": {
     "kind": "hover",
-    "name": "Hover boots",
+    "name": "Flight boots",
     "damage": 1,
     "knockback": 1,
     "growth": 0,

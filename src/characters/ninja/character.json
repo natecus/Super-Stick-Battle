@@ -4,7 +4,7 @@
   "order": 8,
   "tagline": "A blur in the margins.",
   "role": "SHADOW DUELIST",
-  "description": "Beat Ninja to recruit him. Quick katana cuts and Vanish let him disappear for five seconds. Attacking or taking a hit reveals him.",
+  "description": "Beat Ninja to recruit him. Quick katana cuts and Shadow form let him turn translucent and immune to hits for five seconds while still moving and attacking.",
   "appearance": {
     "weapon": "sword",
     "face": "ninja",
@@ -31,7 +31,7 @@
   },
   "ultra": {
     "kind": "invisibility",
-    "name": "Vanish",
+    "name": "Shadow form",
     "damage": 0,
     "knockback": 0,
     "growth": 0,
