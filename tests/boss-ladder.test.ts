@@ -195,7 +195,7 @@ describe('new boss and playable moves', () => {
     match.fighters[0].x = boss.x - 60; match.fighters[1].x = boss.x + 60; boss.charge = 100;
     tick(match, 0.5); expect(boss.attack?.ultra).toBe(true);
     expect(match.fighters.slice(0, 2).map(f => f.damage)).toEqual([0, 0]);
-    tick(match, 0.16); expect(boss.invisible).toBeGreaterThan(4); expect(match.fighters.slice(0, 2).every(f => f.damage === 0)).toBe(true);
+    tick(match, 0.16); expect(boss.shadowForm).toBe(true); expect(match.fighters.slice(0, 2).every(f => f.damage === 0)).toBe(true);
   });
 
   it.each(bosses.filter(b => b.id !== 'dave'))('$name AI deals damage and survives a normal encounter', boss => {

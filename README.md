@@ -75,7 +75,7 @@ To change mode or characters during a match, pause and choose **Change fighters*
 | Dave (boss opponent) | Powerful magic claws with a visible windup | Slime bombs leave temporary puddles that slow players |
 | Cheese (unlockable) | Nacho cheese blobs slow enemies briefly | Cheese snack removes 22 damage after a windup; cannot restore lives |
 | Robot (unlockable) | Fast straight laser bolts | Flight boots grant four seconds of flight: hold W / ↑ to rise, S / ↓ to descend, release to hover; steer and fire in the air |
-| Ninja (unlockable) | Quick, short-range katana cuts; fast and lightweight | Shadow form makes him translucent and immune to hits for five seconds while he can still move and attack |
+| Ninja (unlockable) | Quick, short-range katana cuts; fast and lightweight | Shadow form makes him translucent and invulnerable until he starts his next attack, even if it misses. Ultra charge builds at half the usual rate |
 | Boxer | Quick close-range punches | A large glove flies straight ahead with powerful knockback |
 
 ### Unlockable arenas
@@ -90,7 +90,7 @@ Boss encounters are locked to their home arena, including the lobby and rematche
 | The Lab | Defeat Robot | Three vertical lifts, alternating spikes with flashing warnings, and a moving striped wall that pushes toward them. Jump over the wall or land on top |
 | Moonlit Dojo | Defeat Ninja | Pagoda rooftops, bamboo, moonlight, lanterns, and a gently swaying rope bridge |
 
-Moving platforms carry their riders. Spikes deal 12 damage with knockback and a brief repeat-hit cooldown. Environmental hazards affect both teams and do not charge ultras. Arena motion and hazard timers freeze on pause and reset on restart. Ninja's Shadow form leaves his body faintly visible and his marker readable. It prevents hits and hazard damage until it expires; falling off the page still costs a life.
+Moving platforms carry their riders. Spikes deal 12 damage with knockback and a brief repeat-hit cooldown. Environmental hazards affect both teams and do not charge ultras. Arena motion and hazard timers freeze on pause and reset on restart. Ninja's Shadow form leaves his body faintly visible and his marker readable. It prevents hits and hazard damage until his next attack; falling off the page still costs a life.
 
 ### Boss Battle
 
@@ -99,13 +99,13 @@ Both players fight on the same team, with **no friendly fire**. Drain the boss's
 | Boss | Requirement to challenge | Health | What to watch for |
 | --- | --- | --- | --- |
 | Robot | Available immediately | 800 HP | Lasers and five seconds of flight |
-| Ninja | Defeat Robot | 950 HP | Fast katana attacks and a 4.5-second translucent, untouchable Shadow form |
+| Ninja | Defeat Robot | 950 HP | Shadow form lasts until his next attack. All ultra charge gains, including passive charge, are halved |
 | Cheese | Defeat Ninja | 650 HP | Slowing cheese blobs and a 35 HP healing snack |
 | Dave | Defeat Cheese | 500 HP | Claws and slowing slime bombs |
 
 The boss ladder shows locked, ready, and defeated encounters. Each victory recruits that fighter, unlocks their home arena, and opens the next challenge. **Next boss** returns to the lobby so you can select newly unlocked teammates before starting. Rematch keeps the same opponent; defeated bosses remain available to replay. Completing Dave unlocks the full roster and all arenas. Boxer is available from the start.
 
-Bosses chase players and jump between platforms; ranged bosses try to keep firing distance. Watch attack warnings, dodge projectiles, and avoid Ninja until his Shadow form expires. Boss attacks have armor, so hitting them does not interrupt the windup. When enraged, bosses move and charge their ultras faster. Knocking a boss off the page removes 70 HP; surviving bosses return. Players keep their usual damage, knockback, and respawn rules.
+Bosses chase players and jump between platforms; ranged bosses try to keep firing distance. Watch attack warnings, dodge projectiles, and counter Ninja when his next attack ends Shadow form. Boss attacks have armor, so hitting them does not interrupt the windup. When enraged, bosses move and charge their ultras faster. Knocking a boss off the page removes 70 HP; surviving bosses return. Players keep their usual damage, knockback, and respawn rules.
 
 ### Unlock playable bosses
 

@@ -115,7 +115,7 @@ export class NotebookScene extends Phaser.Scene {
             const x = f.facing > 0 ? f.x : f.x - f.character.attack.range;
             ctx.fillRect(x, f.y - 130, f.character.attack.range, 120); ctx.strokeRect(x, f.y - 130, f.character.attack.range, 120);
           } else if (f.character.ultra.kind === 'slime-bomb') {
-            for (const target of this.match.fighters.filter(target => target.team !== f.team && target.lives > 0 && target.respawn === 0 && target.invisible === 0)) {
+            for (const target of this.match.fighters.filter(target => target.team !== f.team && target.lives > 0 && target.respawn === 0 && !target.shadowForm)) {
               ctx.beginPath(); ctx.ellipse(target.x, target.y, f.character.ultra.range, 14, 0, 0, Math.PI * 2); ctx.stroke();
             }
           } else if (f.character.ultra.kind === 'spin') {
@@ -131,7 +131,7 @@ export class NotebookScene extends Phaser.Scene {
       }
       const celebrating = this.match.phase === 'finished' && (this.match.winner === f.player || this.match.winner === 'team' && f.player !== 2 || this.match.winner === 'boss' && f.player === 2);
       ctx.save();
-      if (f.invisible > 0) ctx.globalAlpha *= 0.35;
+      if (f.shadowForm) ctx.globalAlpha *= 0.35;
       drawCharacter(ctx, f.character, f.x, f.y, f.size, fighterPose(f, this.clock + f.player, celebrating));
       ctx.restore();
       if (f.hovering > 0) {
@@ -147,9 +147,9 @@ export class NotebookScene extends Phaser.Scene {
       } else {
         ctx.fillText(`↑ ${marker}`, Math.max(70, Math.min(WIDTH - 50, f.x)), 126);
       }
-      if (f.slowed > 0 || f.hovering > 0 || f.invisible > 0) {
-        ctx.fillStyle = f.invisible > 0 ? '#71618f' : f.slowed > 0 ? '#658331' : '#458b9c'; ctx.font = 'bold 11px "Courier New", monospace';
-        ctx.fillText(f.invisible > 0 ? `UNTOUCHABLE ${Math.ceil(f.invisible)}s` : f.slowed > 0 ? 'SLOWED!' : `FLIGHT ${Math.ceil(f.hovering)}s`, f.x, markerY - 16);
+      if (f.slowed > 0 || f.hovering > 0 || f.shadowForm) {
+        ctx.fillStyle = f.shadowForm ? '#71618f' : f.slowed > 0 ? '#658331' : '#458b9c'; ctx.font = 'bold 11px "Courier New", monospace';
+        ctx.fillText(f.shadowForm ? 'UNTOUCHABLE' : f.slowed > 0 ? 'SLOWED!' : `FLIGHT ${Math.ceil(f.hovering)}s`, f.x, markerY - 16);
       }
       if (f.charge >= 100) {
         ctx.strokeStyle = '#d2a225'; ctx.lineWidth = 1.5;

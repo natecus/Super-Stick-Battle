@@ -17,7 +17,7 @@ function createFighter(character: CharacterDefinition, player: FighterId): Fight
   const boss = player === 2 ? character.boss : undefined;
   return {
     player, character, x: player === 0 ? 430 : 850, y: 524, vx: 0, vy: 0,
-    team: player, size: boss?.scale ?? 1, health: boss?.health ?? 0, maxHealth: boss?.health ?? 0, slowed: 0, hovering: 0, invisible: 0, arenaHitCooldown: 0,
+    team: player, size: boss?.scale ?? 1, health: boss?.health ?? 0, maxHealth: boss?.health ?? 0, slowed: 0, hovering: 0, shadowForm: false, arenaHitCooldown: 0,
     facing: player === 0 ? 1 : -1, grounded: true, platform: 0, jumps: 0,
     damage: 0, lives: boss ? 1 : 3, charge: 0, stun: 0, invulnerable: 0, cooldown: 0,
     dropThrough: 0, coyote: 0.09, jumpBuffer: 0, attack: null, respawn: 0, walkTime: 0,
@@ -164,7 +164,7 @@ export class Match {
     this.updateHazards(dt);
     const boss = this.boss;
     if (boss && boss.lives > 0 && boss.respawn === 0) {
-      boss.charge = Math.min(100, boss.charge + (boss.character.boss?.chargePerSecond ?? 14) * (this.bossEnraged ? 1.45 : 1) * dt);
+      this.addCharge(boss, (boss.character.boss?.chargePerSecond ?? 14) * (this.bossEnraged ? 1.45 : 1) * dt);
       if (this.bossEnraged && !this.enragedAnnounced) { this.enragedAnnounced = true; this.event('enrage', boss, 2); }
     }
     const bossInput = boss ? this.brain.step(boss, this.fighters.slice(0, 2), dt, this.platforms) : emptyInput();
@@ -207,7 +207,6 @@ export class Match {
     f.dropThrough = Math.max(0, f.dropThrough - dt);
     f.slowed = Math.max(0, f.slowed - dt);
     f.hovering = Math.max(0, f.hovering - dt);
-    f.invisible = Math.max(0, f.invisible - dt);
     f.arenaHitCooldown = Math.max(0, f.arenaHitCooldown - dt);
     // A grounded rider inherits the exact surface displacement before moving independently.
     const riding = f.grounded ? f.platform : null;
@@ -244,7 +243,7 @@ export class Match {
         this.event('jump', f);
       }
       if (input.ultra && f.charge >= 100 && !f.attack && (f.character.ultra.kind !== 'quake' || f.grounded)
-        && !(f.character.ultra.kind === 'invisibility' && f.invisible > 0)
+        && !(f.character.ultra.kind === 'invisibility' && f.shadowForm)
         && !(f.character.ultra.kind === 'hover' && f.hovering > 0)) this.beginAttack(f, true);
       else if (input.attack && f.cooldown === 0 && !f.attack) this.beginAttack(f, false);
     } else {
@@ -333,11 +332,12 @@ export class Match {
 
   private beginAttack(f: Fighter, ultra: boolean) {
     const move = ultra ? f.character.ultra : f.character.attack;
-    const target = this.enemies(f).filter(other => this.canHit(other) && other.invisible === 0).sort((a, b) => Math.abs(a.x - f.x) - Math.abs(b.x - f.x))[0];
+    const target = this.enemies(f).filter(other => this.canHit(other)).sort((a, b) => Math.abs(a.x - f.x) - Math.abs(b.x - f.x))[0];
     f.attack = { ultra, elapsed: 0, duration: move.duration, fired: 0, facing: f.facing, targetX: target?.x ?? f.x, targetY: target?.y ?? 524, hitTargets: [] };
     f.cooldown = (ultra ? move.duration + (f.player === 2 ? 0.45 : 0.25) : f.character.attack.cooldown) * (f.player === 2 && this.bossEnraged ? 0.8 : 1);
-    // Choosing to attack ends respawn protection.
+    // Committing to a swing ends protection, even if it misses or gets interrupted.
     f.invulnerable = 0;
+    f.shadowForm = false;
     if (ultra) {
       f.charge = 0;
       this.event('ultra', f, 2);
@@ -370,7 +370,7 @@ export class Match {
             if (f.player === 2) f.health = Math.min(f.maxHealth, f.health + (move.healAmount ?? 0));
             else f.damage = Math.max(0, f.damage - (move.healAmount ?? 0));
           } else if (move.kind === 'invisibility') {
-            f.invisible = move.invisibleDuration ?? 5;
+            f.shadowForm = true;
           } else {
             f.hovering = move.hoverDuration ?? 4;
             f.vy = -260;
@@ -416,7 +416,7 @@ export class Match {
         // A clear windup, followed by a lob toward each live teammate.
         if (a.elapsed >= 0.62 && a.fired === 0) {
           a.fired = 1;
-          for (const target of this.enemies(f).filter(other => other.lives > 0 && other.respawn === 0 && other.invisible === 0)) {
+          for (const target of this.enemies(f).filter(other => other.lives > 0 && other.respawn === 0 && !other.shadowForm)) {
             const x = f.x + a.facing * 30;
             const y = f.y - BODY_HEIGHT * f.size * 0.7;
             const flight = 0.7;
@@ -552,10 +552,13 @@ export class Match {
     }
   }
 
-  private canHit(f: Fighter) { return f.lives > 0 && f.respawn === 0 && f.invulnerable === 0 && f.invisible === 0; }
+  private canHit(f: Fighter) { return f.lives > 0 && f.respawn === 0 && f.invulnerable === 0 && !f.shadowForm; }
+
+  private addCharge(f: Fighter, amount: number) {
+    f.charge = Math.min(100, f.charge + amount * (f.character.ultra.chargeMultiplier ?? 1));
+  }
 
   private hit(target: Fighter, attacker: Fighter | null, damage: number, base: number, growth: number, direction: number, ultra: boolean) {
-    target.invisible = 0;
     target.damage = Math.min(999, target.damage + damage);
     const isBoss = target.player === 2;
     if (isBoss) {
@@ -575,8 +578,8 @@ export class Match {
     // Being launched does not restore spent jumps.
     target.jumps = Math.max(1, target.jumps);
     target.coyote = 0;
-    if (attacker) target.charge = Math.min(100, target.charge + damage * 0.75);
-    if (!ultra && attacker) attacker.charge = Math.min(100, attacker.charge + damage * 1.25 + 5);
+    if (attacker) this.addCharge(target, damage * 0.75);
+    if (!ultra && attacker) this.addCharge(attacker, damage * 1.25 + 5);
     this.event('hit', target, force / 350);
   }
 
@@ -594,7 +597,7 @@ export class Match {
     f.dropThrough = 0;
     f.slowed = 0;
     f.hovering = 0;
-    f.invisible = 0;
+    f.shadowForm = false;
     f.arenaHitCooldown = 0;
     f.jumpBuffer = 0;
     f.coyote = 0;

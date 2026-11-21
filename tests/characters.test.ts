@@ -33,6 +33,13 @@ describe('character packs', () => {
     expect(() => validateCharacter(character)).toThrow('attack.windup');
   });
 
+  it('allows optional ultra charge tuning and rejects invalid rates', () => {
+    expect(validateCharacter(swordsman).ultra.chargeMultiplier).toBeUndefined();
+    for (const value of [0, -1, 3, NaN, 'slow']) {
+      expect(() => validateCharacter({ ...swordsman, ultra: { ...swordsman.ultra, chargeMultiplier: value } })).toThrow('ultra.chargeMultiplier');
+    }
+  });
+
   it('validates boss packs independently and resolves unlock requirements', () => {
     expect(bosses.find(c => c.id === 'dave')?.boss?.health).toBe(500);
     expect(characters.find(c => c.id === 'dave')?.boss).toBeUndefined();

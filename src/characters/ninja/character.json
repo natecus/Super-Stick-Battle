@@ -4,7 +4,7 @@
   "order": 8,
   "tagline": "A blur in the margins.",
   "role": "SHADOW DUELIST",
-  "description": "Beat Ninja to recruit him. Quick katana cuts and Shadow form let him turn translucent and immune to hits for five seconds while still moving and attacking.",
+  "description": "Beat Ninja to recruit him. Shadow form makes him translucent and invulnerable until his next attack, even if it misses. His ultra charges at half the usual rate.",
   "appearance": {
     "weapon": "sword",
     "face": "ninja",
@@ -32,13 +32,13 @@
   "ultra": {
     "kind": "invisibility",
     "name": "Shadow form",
+    "chargeMultiplier": 0.5,
     "damage": 0,
     "knockback": 0,
     "growth": 0,
     "duration": 0.85,
     "range": 0,
-    "count": 1,
-    "invisibleDuration": 5
+    "count": 1
   },
   "playable": true,
   "unlock": {

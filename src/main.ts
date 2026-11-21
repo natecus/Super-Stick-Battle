@@ -106,7 +106,7 @@ const match = new Match(playableCharacters[0], playableCharacters[1] ?? playable
 const keyboard = new KeyboardInput();
 const sound = new SketchAudio();
 const dialog = get<HTMLDialogElement>('help-dialog');
-dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule boss-instructions"><b>04</b><p><strong>Climb the boss ladder together.</strong> Defeat ' + bosses.map(boss => escape(boss.name)).join(' &rarr; ') + ' in order. Each win unlocks that fighter and their home arena, and opens the next boss. Choose unlocked arenas in Versus. Boss fights are locked to each boss’s home arena. You each have three lives and no friendly fire. Drain the boss’s health to win; one surviving teammate can finish. Bosses warn before attacks, have attack armor, and speed up when enraged. Replay any available boss from the ladder.</p></div><p class="help-footnote">Jump clear of Dave’s slime. Cheese throws slowing blobs and heals with Cheese snack. Robot’s Flight boots grant real flight: hold W / up arrow to rise, S / down arrow to descend, and release to hover. Ninja’s Shadow form makes him translucent and immune to hits for up to five seconds. He can still move and attack. Boxer punches and throws a giant glove with his ultra. Clubber’s Earthquake hits grounded enemies sharing a platform; Boomeranger’s throw hits going out and back.</p>');
+dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule boss-instructions"><b>04</b><p><strong>Climb the boss ladder together.</strong> Defeat ' + bosses.map(boss => escape(boss.name)).join(' &rarr; ') + ' in order. Each win unlocks that fighter and their home arena, and opens the next boss. Choose unlocked arenas in Versus. Boss fights are locked to each boss’s home arena. You each have three lives and no friendly fire. Drain the boss’s health to win; one surviving teammate can finish. Bosses warn before attacks, have attack armor, and speed up when enraged. Replay any available boss from the ladder.</p></div><p class="help-footnote">Jump clear of Dave’s slime. Cheese throws slowing blobs and heals with Cheese snack. Robot’s Flight boots grant real flight: hold W / up arrow to rise, S / down arrow to descend, and release to hover. Ninja’s Shadow form makes him translucent and invulnerable until his next attack, even if it misses. There is no time limit, and his ultra charges at half the usual rate. Boxer punches and throws a giant glove with his ultra. Clubber’s Earthquake hits grounded enemies sharing a platform; Boomeranger’s throw hits going out and back.</p>');
 const announcer = get('announcer');
 dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule"><b>05</b><p><strong>Learn each arena.</strong> Slime Caves slows anyone standing in green slime. Ride the cheese clock; its sides knock you away. In The Lab, lifts carry you, flashing strips warn of spikes, and the striped wall pushes you toward them. Jump over it or ride its top. Moonlit Dojo has a gently swaying bridge. Arena hazards affect both teams.</p></div>');
 dialog.querySelector('.boss-instructions p')!.append(' Unlocks are saved in this browser at this game address.');
@@ -190,7 +190,7 @@ function refresh() {
     charge.setAttribute('aria-valuenow', String(Math.floor(f.charge)));
     (charge.firstElementChild as HTMLElement).style.width = `${f.charge}%`;
     charge.classList.toggle('ready', f.charge >= 100);
-    get(`ultra-label-${p}`).textContent = f.invisible > 0 ? `UNTOUCHABLE ${Math.ceil(f.invisible)}s` : f.hovering > 0 ? `FLIGHT ${Math.ceil(f.hovering)}s` : f.charge >= 100 ? 'ULTRA READY!' : f.character.ultra.name.toUpperCase();
+    get(`ultra-label-${p}`).textContent = f.shadowForm ? 'UNTOUCHABLE · UNTIL NEXT ATTACK' : f.hovering > 0 ? `FLIGHT ${Math.ceil(f.hovering)}s` : f.charge >= 100 ? 'ULTRA READY!' : f.character.ultra.name.toUpperCase();
     get(`name-${p}`).closest('.player-hud')!.classList.toggle('player-eliminated', f.lives === 0);
   });
   const boss = match.boss;
@@ -206,9 +206,9 @@ function refresh() {
     get('boss-status').textContent = `${match.bossEnraged && boss.health > 0 ? 'ENRAGED · ' : ''}${Math.ceil(boss.health)} / ${boss.maxHealth} HP`;
     const ultraTip = boss.character.ultra.kind === 'heal' ? 'Healing windup! Keep the pressure on.'
       : boss.character.ultra.kind === 'hover' ? 'Flight boots! Robot can fly and fire lasers.'
-      : boss.character.ultra.kind === 'invisibility' ? 'Ninja is entering Shadow Form. Dodge until it wears off!' : 'Move away from the marked area.';
+      : boss.character.ultra.kind === 'invisibility' ? 'Ninja is entering Shadow Form. His next attack will reveal him!' : 'Move away from the marked area.';
     get('boss-tip').textContent = boss.health === 0 ? `${boss.character.name} is defeated!` : boss.respawn > 0 ? `${boss.character.name} fell! −70 HP. Coming back…`
-      : boss.invisible > 0 ? `Ninja is translucent and cannot be hit! Dodge for ${Math.ceil(boss.invisible)}s.`
+      : boss.shadowForm ? 'Ninja is translucent and cannot be hit until he starts his next attack!'
       : boss.attack?.ultra ? `${boss.character.ultra.name.toUpperCase()}! ${ultraTip}`
       : boss.attack ? `${boss.character.attack.name.toUpperCase()}! ${boss.character.attack.kind === 'projectile' ? 'Jump out of the firing line.' : 'Jump or back away.'}`
       : match.fighters.some(f => f.player !== 2 && f.slowed > 0) ? 'Slowed! Dodge blobs and jump clear of slime puddles.'

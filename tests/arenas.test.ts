@@ -142,8 +142,8 @@ describe('moving surfaces and environmental hazards', () => {
     m.step(STEP); expect(f.damage).toBe(12); expect(f.vy).toBeLessThan(0); expect(f.charge).toBe(0);
     stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(12);
     f.arenaHitCooldown = 0; f.invulnerable = 1; stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(12);
-    f.invulnerable = 0; f.invisible = 1; stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(12);
-    f.invisible = 0; stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(24);
+    f.invulnerable = 0; f.shadowForm = true; stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(12);
+    f.shadowForm = false; stand(m, f, 0, 80); m.step(STEP); expect(f.damage).toBe(24);
     expect(spikeState(strip, 4.1).height).toBe(0);
   });
 

@@ -64,10 +64,12 @@ All ultras require a full meter. Fields common to all: `kind`, `name`, `damage`,
 | `slime-bomb` | Lobs a slowing bomb toward each living enemy; leaves temporary slime puddles | Explosion/puddle radius | Reserved; one bomb per living enemy |
 | `heal` | After 0.62 seconds, removes player damage or restores boss HP using required `healAmount`; cannot restore lives | Reserved (20) | Set to 1 |
 | `hover` | After 0.62 seconds, takes off briefly and enables flight for required `hoverDuration`: hold up to rise, down to descend, release to hover; gravity resumes on expiry | Reserved (20) | Set to 1 |
-| `invisibility` | After 0.62 seconds, renders the body at 35% opacity and prevents hits for required `invisibleDuration`; movement and attacks remain available, marker and shadow stay visible | Reserved (0) | Set to 1 |
+| `invisibility` | After 0.62 seconds, renders the body at 35% opacity and prevents hits until the next accepted attack starts, even if it misses. No timeout; marker and shadow stay visible | Reserved (0) | Set to 1 |
 | `glove-throw` | Throws one straight glove at 700 pixels/second after 0.26 seconds; duration must exceed windup | Travel distance | Set to 1 |
 
 Support ultras (`heal`, `hover`, `invisibility`) accept damage/knockback/range values of 0 and growth 0; they do not deal damage. Their animation duration must exceed 0.62 seconds. Boss `spin` ultras also use a 0.62-second warning before the first strike; set their duration above 0.62 seconds.
+
+Optional `ultra.chargeMultiplier` scales charge from dealing damage, taking damage, and passive boss charging (including enrage). It defaults to 1 and accepts 0.1–2. Both Ninja configurations use 0.5, so they charge at half their previous rate.
 
 Player attacks are interruptible when hit; Dave's attacks have boss armor. Shared behaviors keep ordinary additions confined to a character folder. For a completely new mechanic, add its type in `src/game/types.ts`, validate it in `src/characters/schema.ts`, implement it in `src/game/simulation.ts`, and add appropriate artwork in `drawing.ts`/`scene.ts`. Keep gameplay rules separate from drawing code.
 

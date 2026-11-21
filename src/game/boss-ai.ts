@@ -58,11 +58,12 @@ export class BossBrain {
       this.jumpIn = 0.32;
     }
     if (dy > 65 && boss.grounded && boss.platform !== null && !platforms[boss.platform].main && !platforms[boss.platform].solid) input.down = true;
-    if (!boss.attack && boss.cooldown === 0 && target.invisible === 0) {
+    // A protected Ninja still commits to attacks, even against another protected Ninja.
+    if (!boss.attack && boss.cooldown === 0 && (!target.shadowForm || boss.shadowForm)) {
       const kind = boss.character.ultra.kind;
       const usefulUltra = kind === 'heal' ? boss.health <= boss.maxHealth - (boss.character.ultra.healAmount ?? 0)
         : kind === 'hover' ? boss.hovering === 0
-        : kind === 'invisibility' ? boss.invisible === 0
+        : kind === 'invisibility' ? !boss.shadowForm
         : kind === 'spin' ? Math.abs(dx) < boss.character.ultra.range + 35 && Math.abs(dy) < 90
         : kind === 'quake' ? boss.grounded : true;
       input.ultra = boss.charge >= 100 && usefulUltra;

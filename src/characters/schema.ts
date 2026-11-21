@@ -37,6 +37,7 @@ export function validateCharacter(value: unknown, source = 'definition'): Charac
   number(c.attack.cooldown, 'attack.cooldown', 0.1, 5);
   number(c.attack.windup, 'attack.windup', 0, c.attack.duration - 0.01);
   number(c.ultra.count, 'ultra.count', 1, 30);
+  if (c.ultra.chargeMultiplier !== undefined) number(c.ultra.chargeMultiplier, 'ultra.chargeMultiplier', 0.1, 2);
   if (!Number.isInteger(c.ultra.count)) fail(source, 'ultra.count must be a whole number');
   if (c.attack.kind === 'projectile') {
     number(c.attack.speed, 'attack.speed', 100, 1500);
@@ -50,7 +51,6 @@ export function validateCharacter(value: unknown, source = 'definition'): Charac
   if (c.attack.slowDuration !== undefined) number(c.attack.slowDuration, 'attack.slowDuration', 0.1, 5);
   if (c.ultra.kind === 'heal') number(c.ultra.healAmount, 'ultra.healAmount', 1, 100);
   if (c.ultra.kind === 'hover') number(c.ultra.hoverDuration, 'ultra.hoverDuration', 0.1, 10);
-  if (c.ultra.kind === 'invisibility') number(c.ultra.invisibleDuration, 'ultra.invisibleDuration', 0.1, 10);
   if (c.ultra.kind === 'glove-throw') number(c.ultra.duration, 'ultra.duration (including windup)', 0.27, 5);
   if (['heal', 'hover', 'invisibility'].includes(c.ultra.kind) || c.boss && c.ultra.kind === 'spin') number(c.ultra.duration, 'ultra.duration (including windup)', 0.63, 5);
   if (c.boss) {

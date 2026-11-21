@@ -40,6 +40,8 @@ export interface CharacterDefinition {
     slowDuration?: number;
   };
   ultra: {
+    /** Multiplies all ultra charge gains; defaults to 1. */
+    chargeMultiplier?: number;
     kind: 'spin' | 'rain' | 'blast' | 'quake' | 'boomerang-burst' | 'slime-bomb' | 'heal' | 'hover' | 'invisibility' | 'glove-throw';
     name: string;
     damage: number;
@@ -52,7 +54,6 @@ export interface CharacterDefinition {
     puddleDuration?: number;
     healAmount?: number;
     hoverDuration?: number;
-    invisibleDuration?: number;
   };
 }
 
@@ -87,8 +88,8 @@ export interface Fighter {
   maxHealth: number;
   slowed: number;
   hovering: number;
-  /** Shadow form: partially visible and immune to hits until this timer expires. */
-  invisible: number;
+  /** Translucent and immune to hits until the fighter starts an attack. */
+  shadowForm: boolean;
   arenaHitCooldown: number;
   character: CharacterDefinition;
   x: number;
