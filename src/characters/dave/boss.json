@@ -4,7 +4,7 @@
   "order": 10,
   "playable": false,
   "tagline": "Just Dave. Definitely a problem.",
-  "role": "THE SLIME KING",
+  "role": "THE MASTER OF THE SLIME CAVES",
   "description": "Defeat Cheese to challenge Dave, the final boss. Defeat the crowned slime menace to unlock his playable version and Slime Caves.",
   "boss": { "health": 500, "scale": 1.65, "enrageAt": 0.5, "chargePerSecond": 14, "requires": "cheese" },
   "appearance": { "weapon": "claws", "face": "slime", "accent": "#719d38", "headRadius": 20, "height": 1.08, "lineWidth": 3.3 },

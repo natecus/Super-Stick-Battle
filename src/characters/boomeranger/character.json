@@ -6,7 +6,7 @@
   "role": "RETURN TO SENDER",
   "description": "Throw a boomerang that can hit on its way out and back. Ka-boomerang explodes when it reaches a rival or its fuse runs out.",
   "appearance": { "weapon": "boomerang", "face": "smile", "accent": "#bf8e32", "headRadius": 17, "height": 1, "lineWidth": 3 },
-  "stats": { "speed": 325, "jumpSpeed": 700, "weight": 0.98 },
+  "stats": { "speed": 400, "jumpSpeed": 700, "weight": 0.98 },
   "attack": { "kind": "projectile", "name": "Boomerang throw", "damage": 7, "knockback": 215, "growth": 2.9, "cooldown": 0.7, "windup": 0.12, "duration": 0.3, "range": 390, "speed": 590, "radius": 15, "projectile": "boomerang" },
   "ultra": { "kind": "boomerang-burst", "name": "Ka-boomerang", "damage": 29, "knockback": 480, "growth": 4.8, "duration": 0.65, "range": 130, "count": 1 }
 }
