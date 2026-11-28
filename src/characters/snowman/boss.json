@@ -1,0 +1,55 @@
+{
+  "id": "snowman",
+  "name": "Snowman",
+  "order": 110,
+  "tagline": "Stay frosty.",
+  "role": "THE SNOW FORT GUARDIAN",
+  "description": "Snowballs slow enemies; Blizzard showers a marked area with snow. Fireballs, nacho cheese, and the fireplace deal extra damage.",
+  "appearance": {
+    "weapon": "none",
+    "face": "snowman",
+    "accent": "#6496b0",
+    "headRadius": 18,
+    "height": 1,
+    "lineWidth": 2.5
+  },
+  "stats": {
+    "speed": 300,
+    "jumpSpeed": 680,
+    "weight": 1.15
+  },
+  "attack": {
+    "kind": "projectile",
+    "name": "Snowball",
+    "damage": 11,
+    "knockback": 280,
+    "growth": 2.5,
+    "cooldown": 1.1,
+    "windup": 0.52,
+    "duration": 0.8,
+    "range": 740,
+    "speed": 610,
+    "radius": 12,
+    "projectile": "snowball",
+    "slowDuration": 0.65
+  },
+  "ultra": {
+    "kind": "blizzard",
+    "name": "Blizzard",
+    "damage": 7,
+    "knockback": 210,
+    "growth": 1.7,
+    "duration": 2.3,
+    "range": 420,
+    "count": 12,
+    "slowDuration": 1.2
+  },
+  "playable": false,
+  "boss": {
+    "health": 700,
+    "scale": 1.5,
+    "enrageAt": 0.4,
+    "chargePerSecond": 12,
+    "ladder": "winter"
+  }
+}

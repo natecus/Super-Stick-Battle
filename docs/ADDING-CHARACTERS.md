@@ -96,3 +96,14 @@ Run `npm test` and `npm run build`. Automated tests validate all discovered char
 ## Arena definitions
 
 `src/game/arenas.ts` owns home-arena boss IDs, platform geometry and motion, safe starting positions, permanent slime patches, and spike timing. A boss victory unlocks its arena for Versus using the same saved defeated-boss IDs. Boss mode always uses that boss's home arena; `Match.selectArena` only accepts changes in the Versus lobby. `platformsAt` produces deterministic geometry from match elapsed time; `arena-drawing.ts` renders that exact geometry, and `simulation.ts` resolves riders, solids, and hazards. New arenas need matching drawing support and physics tests. Keep decorative scenery separate from collidable surfaces.
+
+
+## Winter update
+
+The separate winter ladder is Snowman ? Christmas Tree ? Santa. Snowman is available from a new save, alongside Robot in the classic ladder. Winter boss packs set `boss.ladder: "winter"`; prerequisites must remain within their ladder. `Progression.nextBoss(ladder)` keeps the next-challenge button in the selected ladder. Existing version-1 saves remain compatible. Each winter victory unlocks the matching playable fighter and home arena.
+
+Winter character and projectile drawings live in `winter-drawing.ts`. Snowman throws slowing snowballs and a telegraphed Blizzard; fireballs, nacho cheese, and fireplace damage affect Snowman at 1.5?. Christmas Tree fires pine needles and lobs ornaments that burst into star and moon shards. Santa throws exploding presents and uses Self gift for a beneficial power-up.
+
+`powerups.ts` defines strength, speed, healing, defense, and their negative counterparts. Mystery pickups spawn on arena surfaces after 12 seconds, then every 12?18 seconds; at most two remain, each lasting 10 seconds. Stat effects last 8 seconds, refresh without stacking, replace their opposite, pause with combat, and clear on knockout. Healing/damage changes damage by 25 for players and HP by 25 for bosses. Match accepts an optional random source for reproducible tests.
+
+Snow Fort has slippery ice. The Living Room has walls, a ceiling, bouncy couches (hold down to suppress bouncing), and a fireplace; players lose a stock at 200% damage while bosses retain HP rules. Santa's Workshop has belts and falling solid presents. `platformsAt` drives both gift collision and drawing. `winter-arena-drawing.ts` renders the three arenas. `tests/winter.test.ts` covers progression, attacks, pickup lifecycle, weaknesses, arena physics, and complete boss encounters.

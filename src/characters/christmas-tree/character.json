@@ -1,0 +1,48 @@
+{
+  "id": "christmas-tree",
+  "name": "Christmas Tree",
+  "order": 120,
+  "tagline": "Deck the halls. Dodge the ornaments.",
+  "role": "THE LIVING ROOM LEGEND",
+  "description": "Fires pine needles and lobs ornaments that burst into sharp stars and moons.",
+  "unlock": {
+    "boss": "christmas-tree"
+  },
+  "appearance": {
+    "weapon": "none",
+    "face": "tree",
+    "accent": "#4d8b57",
+    "headRadius": 18,
+    "height": 1,
+    "lineWidth": 2.5
+  },
+  "stats": {
+    "speed": 270,
+    "jumpSpeed": 660,
+    "weight": 1.35
+  },
+  "attack": {
+    "kind": "projectile",
+    "name": "Pine needles",
+    "damage": 9,
+    "knockback": 240,
+    "growth": 2.2,
+    "cooldown": 0.48,
+    "windup": 0.16,
+    "duration": 0.34,
+    "range": 800,
+    "speed": 850,
+    "radius": 5,
+    "projectile": "needle"
+  },
+  "ultra": {
+    "kind": "ornament-throw",
+    "name": "Ornament throw",
+    "damage": 18,
+    "knockback": 370,
+    "growth": 3,
+    "duration": 1.4,
+    "range": 760,
+    "count": 5
+  }
+}

@@ -1,8 +1,9 @@
 import type { Platform } from './types';
 
-export type ArenaId = 'notebook' | 'slime-caves' | 'cheese-land' | 'the-lab' | 'moonlit-dojo';
+export type ArenaId = 'notebook' | 'slime-caves' | 'cheese-land' | 'the-lab' | 'moonlit-dojo' | 'snow-fort' | 'living-room' | 'santas-workshop';
 export interface ArenaPlatform extends Platform {
   motion?: { axis: 'x' | 'y'; amplitude: number; period: number; phase?: number };
+  fallingGift?: { delay: number; direction: number };
 }
 export interface SlimePatch { platform: number; offset: number; width: number }
 export interface SpikeStrip { x: number; width: number; y: number; phase: number }
@@ -16,6 +17,8 @@ export interface ArenaDefinition {
   spawns?: { duel: [number, number]; boss: [number, number, number] };
   slime?: SlimePatch[];
   spikes?: SpikeStrip[];
+  room?: { left: number; right: number; ceiling: number; knockoutDamage: number };
+  fire?: { x: number; y: number; width: number; height: number };
 }
 
 export const DESK_PLATFORMS: ArenaPlatform[] = [
@@ -59,14 +62,55 @@ export const arenas: ArenaDefinition[] = [
     ] },
 ];
 
+arenas.push(
+  { id: 'snow-fort', name: 'Snow Fort', boss: 'snowman', accent: '#6496b0',
+    description: 'An icy snow fort. Slippery battlements keep your momentum: brake early and use the snow bridge to recover.',
+    platforms: [
+      { x: 225, y: 524, width: 830, main: true, ice: true },
+      { x: 260, y: 372, width: 210, ice: true }, { x: 810, y: 372, width: 210, ice: true },
+      { x: 540, y: 235, width: 200, ice: true }, { x: 535, y: 430, width: 210 },
+    ] },
+  { id: 'living-room', name: 'Living Room', boss: 'christmas-tree', accent: '#ad654c',
+    description: 'Walls and a ceiling keep you inside. Reach 200% damage to lose a life. Bounce off the couches; avoid the fireplace! Bosses still lose HP.',
+    room: { left: 150, right: 1130, ceiling: 110, knockoutDamage: 200 },
+    fire: { x: 565, y: 524, width: 150, height: 80 },
+    spawns: { duel: [435, 845], boss: [430, 850, 760] },
+    platforms: [
+      { x: 150, y: 524, width: 980, main: true },
+      { x: 170, y: 435, width: 200, bounce: true }, { x: 910, y: 435, width: 200, bounce: true },
+      { x: 300, y: 300, width: 210 }, { x: 770, y: 300, width: 210 },
+    ] },
+  { id: 'santas-workshop', name: "Santa's Workshop", boss: 'santa', accent: '#b74f46',
+    description: 'Conveyor belts carry fighters and falling presents. Presents are solid: jump onto them or over them. Mind the gaps!',
+    spawns: { duel: [430, 850], boss: [360, 920, 640] },
+    platforms: [
+      { x: 225, y: 524, width: 260, main: true, conveyor: 70 },
+      { x: 530, y: 524, width: 220, main: true },
+      { x: 795, y: 524, width: 260, main: true, conveyor: -70 },
+      { x: 370, y: 350, width: 190 }, { x: 720, y: 350, width: 190 },
+      { x: 590, y: 220, width: 100 },
+      { x: 250, y: 90, width: 54, height: 54, solid: 'gift', fallingGift: { delay: 0, direction: 1 } },
+      { x: 976, y: 90, width: 54, height: 54, solid: 'gift', fallingGift: { delay: 3.5, direction: -1 } },
+    ] },
+);
+
 export function arenaForBoss(bossId: string): ArenaDefinition {
   return arenas.find(arena => arena.boss === bossId) ?? arenas[0];
 }
 
 // Absolute-time motion is deterministic, stays in sync with collisions, and freezes on pause.
 export function platformsAt(arena: ArenaDefinition, time: number): Platform[] {
-  return arena.platforms.map(({ motion, ...p }) => {
+  return arena.platforms.map(({ motion, fallingGift, ...p }) => {
     if (motion) p[motion.axis] += Math.sin(time / motion.period * Math.PI * 2 + (motion.phase ?? 0)) * motion.amplitude;
+    if (fallingGift) {
+      const age = (time + fallingGift.delay) % 8;
+      const landing = Math.sqrt(2 * (470 - p.y) / 950);
+      p.y = age < landing ? p.y + 475 * age * age : 470;
+      p.x += Math.max(0, age - landing) * 70 * fallingGift.direction;
+      // Once off the belt, the solid gift falls into the gap and is recycled.
+      const edgeAge = landing + 235 / 70;
+      if (age > edgeAge) p.y += 475 * (age - edgeAge) ** 2;
+    }
     return p;
   });
 }

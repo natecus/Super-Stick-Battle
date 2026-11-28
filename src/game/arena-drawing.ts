@@ -1,3 +1,4 @@
+import { drawWinterBackground, drawWinterPlatforms } from './winter-arena-drawing';
 import { type ArenaDefinition, spikeState } from './arenas';
 import { drawStage, line } from './drawing';
 import type { Platform } from './types';
@@ -32,6 +33,7 @@ function roof(ctx: CanvasRenderingContext2D, x: number, y: number, width: number
 
 // Backgrounds are cached by the scene; only moving/collidable scenery is drawn each frame.
 export function drawArenaBackground(ctx: CanvasRenderingContext2D, arena: ArenaDefinition) {
+  if (drawWinterBackground(ctx, arena)) return;
   drawStage(ctx, arena.id === 'notebook' ? arena.platforms : []);
   if (arena.id === 'notebook') return;
   ctx.save();
@@ -104,6 +106,7 @@ export function drawArenaBackground(ctx: CanvasRenderingContext2D, arena: ArenaD
 }
 
 export function drawArenaPlatforms(ctx: CanvasRenderingContext2D, arena: ArenaDefinition, platforms: Platform[], time: number) {
+  if (drawWinterPlatforms(ctx, arena, platforms, time)) return;
   if (arena.id === 'notebook') return;
   ctx.save(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   platforms.forEach((p, index) => {

@@ -1,0 +1,54 @@
+{
+  "id": "santa",
+  "name": "Santa",
+  "order": 130,
+  "tagline": "Special delivery. Some assembly required.",
+  "role": "THE WORKSHOP MASTER",
+  "description": "Throws exploding presents. Self gift grants a random beneficial power-up.",
+  "appearance": {
+    "weapon": "none",
+    "face": "santa",
+    "accent": "#b74f46",
+    "headRadius": 18,
+    "height": 1,
+    "lineWidth": 2.5
+  },
+  "stats": {
+    "speed": 325,
+    "jumpSpeed": 700,
+    "weight": 1.2
+  },
+  "attack": {
+    "kind": "projectile",
+    "name": "Present throw",
+    "damage": 16,
+    "knockback": 330,
+    "growth": 2.8,
+    "cooldown": 1.1,
+    "windup": 0.52,
+    "duration": 0.8,
+    "range": 650,
+    "speed": 560,
+    "radius": 15,
+    "projectile": "present"
+  },
+  "ultra": {
+    "kind": "self-gift",
+    "name": "Self gift",
+    "damage": 0,
+    "knockback": 0,
+    "growth": 0,
+    "duration": 1,
+    "range": 0,
+    "count": 1
+  },
+  "playable": false,
+  "boss": {
+    "health": 1000,
+    "scale": 1.5,
+    "enrageAt": 0.4,
+    "chargePerSecond": 12,
+    "ladder": "winter",
+    "requires": "christmas-tree"
+  }
+}

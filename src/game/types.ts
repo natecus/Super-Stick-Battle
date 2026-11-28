@@ -1,9 +1,13 @@
 export type PlayerId = 0 | 1;
 export type FighterId = PlayerId | 2;
 export type GameMode = 'duel' | 'boss';
+export type BossLadder = 'classic' | 'winter';
+export type PowerUpKind = 'strength' | 'speed' | 'heal' | 'defense' | 'weakness' | 'slow' | 'damage' | 'fragile';
+export interface PowerUpEffect { kind: PowerUpKind; remaining: number }
+export interface PowerUpPickup { id: number; kind: PowerUpKind; platform: number; offset: number; life: number }
 export type MatchWinner = PlayerId | 'team' | 'boss' | null;
 export type Weapon = 'sword' | 'bow' | 'staff' | 'club' | 'boomerang' | 'claws' | 'blaster' | 'gloves' | 'none';
-export type ProjectileKind = 'arrow' | 'magic' | 'fireball' | 'boomerang' | 'slime' | 'cheese' | 'laser' | 'glove';
+export type ProjectileKind = 'arrow' | 'magic' | 'fireball' | 'boomerang' | 'slime' | 'cheese' | 'laser' | 'glove' | 'snowball' | 'needle' | 'ornament' | 'present';
 
 export interface CharacterDefinition {
   id: string;
@@ -14,10 +18,10 @@ export interface CharacterDefinition {
   description: string;
   playable?: boolean;
   unlock?: { boss: string };
-  boss?: { health: number; scale: number; enrageAt: number; chargePerSecond: number; requires?: string };
+  boss?: { health: number; scale: number; enrageAt: number; chargePerSecond: number; requires?: string; ladder?: BossLadder };
   appearance: {
     weapon: Weapon;
-    face: 'smile' | 'grin' | 'angry' | 'slime' | 'cheese' | 'robot' | 'ninja';
+    face: 'smile' | 'grin' | 'angry' | 'slime' | 'cheese' | 'robot' | 'ninja' | 'snowman' | 'tree' | 'santa';
     accent: string;
     headRadius: number;
     height: number;
@@ -36,13 +40,13 @@ export interface CharacterDefinition {
     range: number;
     speed?: number;
     radius?: number;
-    projectile?: 'arrow' | 'magic' | 'boomerang' | 'cheese' | 'laser';
+    projectile?: 'arrow' | 'magic' | 'boomerang' | 'cheese' | 'laser' | 'snowball' | 'needle' | 'present';
     slowDuration?: number;
   };
   ultra: {
     /** Multiplies all ultra charge gains; defaults to 1. */
     chargeMultiplier?: number;
-    kind: 'spin' | 'rain' | 'blast' | 'quake' | 'boomerang-burst' | 'slime-bomb' | 'heal' | 'hover' | 'invisibility' | 'glove-throw';
+    kind: 'spin' | 'rain' | 'blast' | 'quake' | 'boomerang-burst' | 'slime-bomb' | 'heal' | 'hover' | 'invisibility' | 'glove-throw' | 'blizzard' | 'ornament-throw' | 'self-gift';
     name: string;
     damage: number;
     knockback: number;
@@ -91,6 +95,7 @@ export interface Fighter {
   /** Translucent and immune to hits until the fighter starts an attack. */
   shadowForm: boolean;
   arenaHitCooldown: number;
+  powerUps: PowerUpEffect[];
   character: CharacterDefinition;
   x: number;
   y: number;
@@ -114,7 +119,7 @@ export interface Fighter {
   walkTime: number;
 }
 
-export interface Platform { x: number; y: number; width: number; main?: boolean; height?: number; solid?: 'clock' | 'wall' }
+export interface Platform { x: number; y: number; width: number; main?: boolean; height?: number; solid?: 'clock' | 'wall' | 'gift'; ice?: boolean; conveyor?: number; bounce?: boolean }
 
 export interface Projectile {
   id: number;
@@ -138,6 +143,7 @@ export interface Projectile {
   fuse?: number;
   slowDuration?: number;
   puddleDuration?: number;
+  variant?: number;
 }
 
 export interface Hazard {

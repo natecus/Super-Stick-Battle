@@ -26,14 +26,15 @@ const ninja = characters.find(c => c.id === 'ninja')!;
 
 describe('progressive boss ladder', () => {
   it('opens exactly one new encounter per victory, saves rewards, and allows replay', () => {
+    const classic = bosses.filter(b => (b.boss?.ladder ?? 'classic') === 'classic');
     const save = storage();
     let progress = new Progression(characters, save, bosses);
-    expect(bosses.map(b => b.id)).toEqual(['robot', 'ninja', 'cheese', 'dave']);
-    for (let i = 0; i < bosses.length; i++) {
-      const boss = bosses[i];
-      expect(progress.nextBoss()?.id).toBe(boss.id);
-      expect(bosses.filter(b => progress.canChallenge(b)).map(b => b.id)).toEqual(bosses.slice(0, i + 1).map(b => b.id));
-      for (const later of bosses.slice(i + 1)) expect(progress.recordResult(win, later.id)).toEqual([]);
+    expect(classic.map(b => b.id)).toEqual(['robot', 'ninja', 'cheese', 'dave']);
+    for (let i = 0; i < classic.length; i++) {
+      const boss = classic[i];
+      expect(progress.nextBoss('classic')?.id).toBe(boss.id);
+      expect(classic.filter(b => progress.canChallenge(b)).map(b => b.id)).toEqual(classic.slice(0, i + 1).map(b => b.id));
+      for (const later of classic.slice(i + 1)) expect(progress.recordResult(win, later.id)).toEqual([]);
       const match = new Match(sword, sword, boss, c => progress.canSelect(c), b => progress.canChallenge(b));
       match.setMode('boss'); match.start(); tick(match, 3.01);
       // Earn each reward from an actual final hit with one surviving teammate.
@@ -54,9 +55,10 @@ describe('progressive boss ladder', () => {
       match.lobby(); match.setMode('duel');
       expect(match.fighters.map(f => f.character.id)).toEqual([boss.id, boss.id]);
     }
-    expect(progress.nextBoss()).toBeUndefined();
-    expect(characters.every(c => progress.canSelect(c))).toBe(true);
-    expect(JSON.parse(save.getItem(PROGRESS_KEY)!).defeatedBosses).toEqual(bosses.map(b => b.id));
+    expect(progress.nextBoss('classic')).toBeUndefined();
+    expect(characters.filter(c => !['snowman', 'christmas-tree', 'santa'].includes(c.id)).every(c => progress.canSelect(c))).toBe(true);
+    expect(progress.nextBoss('winter')?.id).toBe('snowman');
+    expect(JSON.parse(save.getItem(PROGRESS_KEY)!).defeatedBosses).toEqual(classic.map(b => b.id));
   });
 
   it.each([1, 2, 3, 4])('preserves %i victories from the old ladder without granting unearned rewards', count => {
@@ -73,7 +75,7 @@ describe('progressive boss ladder', () => {
         expect(progress.recordResult(win, boss.id)).toEqual([]);
       }
     }
-    expect(progress.nextBoss()?.id).toBe(count === 4 ? undefined : count === 3 ? 'ninja' : 'robot');
+    expect(progress.nextBoss('classic')?.id).toBe(count === 4 ? undefined : count === 3 ? 'ninja' : 'robot');
   });
 
   it('blocks locked encounters in the simulation and cannot change bosses mid-match', () => {

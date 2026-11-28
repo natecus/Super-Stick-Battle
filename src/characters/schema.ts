@@ -15,7 +15,7 @@ export function validateCharacter(value: unknown, source = 'definition'): Charac
   number(c.order, 'order', 0, 9999);
   if (!c.appearance || !c.stats || !c.attack || !c.ultra) fail(source, 'appearance, stats, attack, and ultra are required');
   if (!['sword', 'bow', 'staff', 'club', 'boomerang', 'claws', 'blaster', 'gloves', 'none'].includes(c.appearance.weapon)) fail(source, 'unknown appearance.weapon');
-  if (!['smile', 'grin', 'angry', 'slime', 'cheese', 'robot', 'ninja'].includes(c.appearance.face)) fail(source, 'unknown appearance.face');
+  if (!['smile', 'grin', 'angry', 'slime', 'cheese', 'robot', 'ninja', 'snowman', 'tree', 'santa'].includes(c.appearance.face)) fail(source, 'unknown appearance.face');
   if (!/^#[0-9a-f]{6}$/i.test(c.appearance.accent)) fail(source, 'accent must be a six-digit hex color');
   number(c.appearance.headRadius, 'headRadius', 10, 25);
   number(c.appearance.height, 'height', 0.7, 1.3);
@@ -24,9 +24,9 @@ export function validateCharacter(value: unknown, source = 'definition'): Charac
   number(c.stats.jumpSpeed, 'jumpSpeed', 400, 1000);
   number(c.stats.weight, 'weight', 0.5, 2);
   if (!['melee', 'projectile'].includes(c.attack.kind)) fail(source, 'unknown attack.kind');
-  if (!['spin', 'rain', 'blast', 'quake', 'boomerang-burst', 'slime-bomb', 'heal', 'hover', 'invisibility', 'glove-throw'].includes(c.ultra.kind)) fail(source, 'unknown ultra.kind');
+  if (!['spin', 'rain', 'blast', 'quake', 'boomerang-burst', 'slime-bomb', 'heal', 'hover', 'invisibility', 'glove-throw', 'blizzard', 'ornament-throw', 'self-gift'].includes(c.ultra.kind)) fail(source, 'unknown ultra.kind');
   for (const move of ['attack', 'ultra'] as const) {
-    const support = move === 'ultra' && ['heal', 'hover', 'invisibility'].includes(c.ultra.kind);
+    const support = move === 'ultra' && ['heal', 'hover', 'invisibility', 'self-gift'].includes(c.ultra.kind);
     if (typeof c[move].name !== 'string' || !c[move].name.trim()) fail(source, `${move}.name is required`);
     number(c[move].damage, `${move}.damage`, support ? 0 : 1, 100);
     number(c[move].knockback, `${move}.knockback`, support ? 0 : 1, 1000);
@@ -42,7 +42,7 @@ export function validateCharacter(value: unknown, source = 'definition'): Charac
   if (c.attack.kind === 'projectile') {
     number(c.attack.speed, 'attack.speed', 100, 1500);
     number(c.attack.radius, 'attack.radius', 2, 40);
-    if (!['arrow', 'magic', 'boomerang', 'cheese', 'laser'].includes(c.attack.projectile ?? '')) fail(source, 'projectile attacks need a supported projectile');
+    if (!['arrow', 'magic', 'boomerang', 'cheese', 'laser', 'snowball', 'needle', 'present'].includes(c.attack.projectile ?? '')) fail(source, 'projectile attacks need a supported projectile');
   }
   if (c.playable !== undefined && typeof c.playable !== 'boolean') fail(source, 'playable must be true or false');
   if (c.unlock !== undefined && (!c.unlock || typeof c.unlock.boss !== 'string' || !/^[a-z][a-z0-9-]*$/.test(c.unlock.boss))) fail(source, 'unlock.boss must be a valid boss ID');
@@ -51,9 +51,11 @@ export function validateCharacter(value: unknown, source = 'definition'): Charac
   if (c.attack.slowDuration !== undefined) number(c.attack.slowDuration, 'attack.slowDuration', 0.1, 5);
   if (c.ultra.kind === 'heal') number(c.ultra.healAmount, 'ultra.healAmount', 1, 100);
   if (c.ultra.kind === 'hover') number(c.ultra.hoverDuration, 'ultra.hoverDuration', 0.1, 10);
+  if (['blizzard', 'ornament-throw'].includes(c.ultra.kind)) number(c.ultra.duration, 'ultra.duration (including windup)', 0.7, 5);
   if (c.ultra.kind === 'glove-throw') number(c.ultra.duration, 'ultra.duration (including windup)', 0.27, 5);
-  if (['heal', 'hover', 'invisibility'].includes(c.ultra.kind) || c.boss && c.ultra.kind === 'spin') number(c.ultra.duration, 'ultra.duration (including windup)', 0.63, 5);
+  if (['heal', 'hover', 'invisibility', 'self-gift'].includes(c.ultra.kind) || c.boss && c.ultra.kind === 'spin') number(c.ultra.duration, 'ultra.duration (including windup)', 0.63, 5);
   if (c.boss) {
+    if (c.boss.ladder !== undefined && !['classic', 'winter'].includes(c.boss.ladder)) fail(source, 'unknown boss.ladder');
     number(c.boss.health, 'boss.health', 100, 3000);
     number(c.boss.scale, 'boss.scale', 1, 2.5);
     number(c.boss.enrageAt, 'boss.enrageAt', 0.1, 0.9);
@@ -73,6 +75,7 @@ export function validateBossProgression(bosses: CharacterDefinition[]): void {
       visited.add(required);
       const previous = bosses.find(c => c.id === required);
       if (!previous?.boss) fail(boss.id, 'boss.requires does not match a configured boss');
+      if ((previous!.boss!.ladder ?? 'classic') !== (boss.boss!.ladder ?? 'classic')) fail(boss.id, 'boss.requires must stay within its ladder');
       required = previous!.boss!.requires;
     }
   }

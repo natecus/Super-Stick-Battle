@@ -1,3 +1,4 @@
+import { POWER_UP_LABELS, GOOD_POWER_UPS } from './powerups';
 import Phaser from 'phaser';
 import { drawCharacter, drawProjectile, drawStar, fighterPose, line } from './drawing';
 import { drawArenaBackground, drawArenaPlatforms } from './arena-drawing';
@@ -79,6 +80,12 @@ export class NotebookScene extends Phaser.Scene {
     if (this.shake > 0 && !this.reducedMotion) ctx.translate(Math.sin(this.clock * 150) * this.shake * 20, Math.cos(this.clock * 180) * this.shake * 10);
     drawArenaPlatforms(ctx, this.match.arena, this.match.platforms, this.match.elapsed);
 
+    for (const item of this.match.pickups) {
+      const platform = this.match.platforms[item.platform], x = platform.x + item.offset, y = platform.y - 24;
+      ctx.save(); ctx.globalAlpha = Math.min(1, item.life); ctx.fillStyle = '#f1d98a'; ctx.strokeStyle = '#796237'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#665334'; ctx.textAlign = 'center'; ctx.font = 'bold 23px "Courier New", monospace'; ctx.fillText('?', x, y + 8); ctx.restore();
+    }
     for (const hazard of this.match.hazards) {
       ctx.save();
       ctx.globalAlpha = Math.min(1, hazard.life * 2);
@@ -100,8 +107,8 @@ export class NotebookScene extends Phaser.Scene {
     }
 
     for (const f of this.match.fighters) {
-      if (f.attack?.ultra && f.character.ultra.kind === 'rain') {
-        ctx.save(); ctx.globalAlpha = 0.13; ctx.fillStyle = PLAYER_COLORS[f.player];
+      if (f.attack?.ultra && (f.character.ultra.kind === 'rain' || f.character.ultra.kind === 'blizzard')) {
+        ctx.save(); ctx.globalAlpha = 0.13; ctx.fillStyle = f.character.ultra.kind === 'blizzard' ? '#539ab8' : PLAYER_COLORS[f.player];
         ctx.fillRect(f.attack.targetX - f.character.ultra.range / 2, 100, f.character.ultra.range, 430);
         ctx.restore();
       }
@@ -150,6 +157,12 @@ export class NotebookScene extends Phaser.Scene {
       if (f.slowed > 0 || f.hovering > 0 || f.shadowForm) {
         ctx.fillStyle = f.shadowForm ? '#71618f' : f.slowed > 0 ? '#658331' : '#458b9c'; ctx.font = 'bold 11px "Courier New", monospace';
         ctx.fillText(f.shadowForm ? 'UNTOUCHABLE' : f.slowed > 0 ? 'SLOWED!' : `FLIGHT ${Math.ceil(f.hovering)}s`, f.x, markerY - 16);
+      }
+      const powerUp = f.powerUps[f.powerUps.length - 1];
+      if (powerUp) {
+        ctx.fillStyle = GOOD_POWER_UPS.includes(powerUp.kind) ? '#397754' : '#a34b40';
+        ctx.font = 'bold 11px "Courier New", monospace';
+        ctx.fillText(`${POWER_UP_LABELS[powerUp.kind]}${powerUp.kind === 'heal' || powerUp.kind === 'damage' ? '' : ` ${Math.ceil(powerUp.remaining)}s`}`, f.x, markerY - 31);
       }
       if (f.charge >= 100) {
         ctx.strokeStyle = '#d2a225'; ctx.lineWidth = 1.5;

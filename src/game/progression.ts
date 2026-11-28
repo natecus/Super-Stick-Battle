@@ -1,4 +1,4 @@
-import type { CharacterDefinition, GameMode, MatchPhase, MatchWinner } from './types';
+import type { BossLadder, CharacterDefinition, GameMode, MatchPhase, MatchWinner } from './types';
 import type { ArenaDefinition } from './arenas';
 
 export const PROGRESS_KEY = 'super-stick-battle.progress.v1';
@@ -41,8 +41,8 @@ export class Progression {
     return Boolean(boss.boss && (this.hasDefeated(boss.id) || !boss.boss.requires || this.hasDefeated(boss.boss.requires)));
   }
 
-  nextBoss(): CharacterDefinition | undefined {
-    return this.bosses.find(boss => this.canChallenge(boss) && !this.hasDefeated(boss.id));
+  nextBoss(ladder?: BossLadder): CharacterDefinition | undefined {
+    return this.bosses.find(boss => (!ladder || (boss.boss?.ladder ?? 'classic') === ladder) && this.canChallenge(boss) && !this.hasDefeated(boss.id));
   }
 
   recordResult(result: Result, bossId?: string): CharacterDefinition[] {

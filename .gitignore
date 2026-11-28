@@ -8,6 +8,7 @@ coverage/
 # Original reference photographs stay local; the game uses vector artwork.
 /*.jpeg
 /src/characters/*/reference.jpeg
+/Concept Art/
 
 # Local configuration and credentials are not published.
 .env

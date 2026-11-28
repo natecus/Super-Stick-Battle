@@ -1,3 +1,4 @@
+import { drawWinterCharacter, drawWinterProjectile } from './winter-drawing';
 import { HEIGHT, PLATFORMS, PLAYER_COLORS, WIDTH } from './simulation';
 import type { CharacterDefinition, Fighter, Platform, Projectile } from './types';
 
@@ -10,6 +11,7 @@ export interface DrawingPose { pose: Pose; time: number; progress?: number; faci
 // Shared vector rig: the same drawing powers roster portraits and in-game animation.
 // All coordinates are relative to the feet; art never determines the collision box.
 export function drawCharacter(ctx: CanvasRenderingContext2D, character: CharacterDefinition, x: number, y: number, scale: number, animation: DrawingPose) {
+  if (drawWinterCharacter(ctx, character, x, y, scale, animation)) return;
   const { pose, time, progress = 0, facing = 1, color } = animation;
   const { appearance } = character;
   ctx.save();
@@ -284,6 +286,7 @@ export function drawArrow(ctx: CanvasRenderingContext2D, x: number, y: number, a
 }
 
 export function drawProjectile(ctx: CanvasRenderingContext2D, p: Projectile, time: number) {
+  if (drawWinterProjectile(ctx, p, time)) return;
   if (p.kind === 'glove') {
     ctx.save(); ctx.translate(p.x, p.y); ctx.scale(Math.sign(p.vx) || 1, 1);
     ctx.strokeStyle = '#c8544788';

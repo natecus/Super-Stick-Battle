@@ -39,13 +39,13 @@ app.innerHTML = `
 
     <div class="mode-picker" role="group" aria-label="Game mode">
       <button class="mode-choice" data-mode="duel" aria-pressed="true"><span class="mode-symbol">VS</span><span><strong>Versus</strong><small>Player 1 vs. Player 2</small></span></button>
-      <button class="mode-choice boss-mode-choice" data-mode="boss" aria-pressed="false"><span class="mode-symbol">2v1</span><span><strong>Boss Battle</strong><small>Four bosses. One team.</small></span><span class="new-label">NEW</span></button>
+      <button class="mode-choice boss-mode-choice" data-mode="boss" aria-pressed="false"><span class="mode-symbol">2v1</span><span><strong>Boss Battle</strong><small>Two ladders. Seven bosses.</small></span><span class="new-label">NEW</span></button>
       <p class="mode-explainer" id="mode-explainer">A friendly rivalry.<br>Three lives. Last doodle standing.</p>
     </div>
 
     <section class="boss-ladder" id="boss-ladder" aria-labelledby="boss-ladder-title" hidden>
-      <div class="ladder-heading"><strong id="boss-ladder-title">THE BOSS LADDER</strong><span id="ladder-progress"></span></div>
-      <div class="boss-choices" role="group" aria-label="Choose a boss">${bosses.map((boss, index) => `<button class="boss-choice" data-boss="${escape(boss.id)}" aria-pressed="false" style="--accent:${boss.appearance.accent}"><span class="boss-number">0${index + 1}</span><strong>${escape(boss.name)}</strong><small data-boss-status></small></button>`).join('')}</div>
+      <div class="ladder-heading"><strong id="boss-ladder-title">CHOOSE YOUR BOSS LADDER</strong><span id="ladder-progress"></span></div>
+      ${(['classic', 'winter'] as const).map(ladder => `<div class="ladder-group"><div class="ladder-heading"><strong>${ladder === 'winter' ? 'WINTER LADDER ? START HERE ANYTIME' : 'CLASSIC LADDER'}</strong><span data-ladder-progress="${ladder}"></span></div><div class="boss-choices ${ladder === 'winter' ? 'winter-choices' : ''}" role="group" aria-label="${ladder} boss ladder">${bosses.filter(boss => (boss.boss?.ladder ?? 'classic') === ladder).map((boss, index) => `<button class="boss-choice" data-boss="${escape(boss.id)}" aria-pressed="false" style="--accent:${boss.appearance.accent}"><span class="boss-number">0${index + 1}</span><strong>${escape(boss.name)}</strong><small data-boss-status></small></button>`).join('')}</div></div>`).join('')}
       <p>Win to recruit that fighter, unlock their arena, and open the next challenge.</p>
     </section>
     <section class="arena-picker" aria-labelledby="arena-picker-title">
@@ -106,9 +106,12 @@ const match = new Match(playableCharacters[0], playableCharacters[1] ?? playable
 const keyboard = new KeyboardInput();
 const sound = new SketchAudio();
 const dialog = get<HTMLDialogElement>('help-dialog');
-dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule boss-instructions"><b>04</b><p><strong>Climb the boss ladder together.</strong> Defeat ' + bosses.map(boss => escape(boss.name)).join(' &rarr; ') + ' in order. Each win unlocks that fighter and their home arena, and opens the next boss. Choose unlocked arenas in Versus. Boss fights are locked to each boss’s home arena. You each have three lives and no friendly fire. Drain the boss’s health to win; one surviving teammate can finish. Bosses warn before attacks, have attack armor, and speed up when enraged. Replay any available boss from the ladder.</p></div><p class="help-footnote">Jump clear of Dave’s slime. Cheese throws slowing blobs and heals with Cheese snack. Robot’s Flight boots grant real flight: hold W / up arrow to rise, S / down arrow to descend, and release to hover. Ninja’s Shadow form makes him translucent and invulnerable until his next attack, even if it misses. There is no time limit, and his ultra charges at half the usual rate. Boxer punches and throws a giant glove with his ultra. Clubber’s Earthquake hits grounded enemies sharing a platform; Boomeranger’s throw hits going out and back.</p>');
+dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule boss-instructions"><b>04</b><p><strong>Climb the boss ladder together.</strong> Defeat ' + bosses.filter(boss => !boss.boss?.ladder || boss.boss.ladder === 'classic').map(boss => escape(boss.name)).join(' &rarr; ') + ' in the classic ladder, or start the independent winter ladder: Snowman &rarr; Christmas Tree &rarr; Santa. Each win unlocks that fighter and their home arena, and opens the next boss. Choose unlocked arenas in Versus. Boss fights are locked to each boss’s home arena. You each have three lives and no friendly fire. Drain the boss’s health to win; one surviving teammate can finish. Bosses warn before attacks, have attack armor, and speed up when enraged. Replay any available boss from the ladder.</p></div><p class="help-footnote">Jump clear of Dave’s slime. Cheese throws slowing blobs and heals with Cheese snack. Robot’s Flight boots grant real flight: hold W / up arrow to rise, S / down arrow to descend, and release to hover. Ninja’s Shadow form makes him translucent and invulnerable until his next attack, even if it misses. There is no time limit, and his ultra charges at half the usual rate. Boxer punches and throws a giant glove with his ultra. Clubber’s Earthquake hits grounded enemies sharing a platform; Boomeranger’s throw hits going out and back.</p>');
+
 const announcer = get('announcer');
 dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule"><b>05</b><p><strong>Learn each arena.</strong> Slime Caves slows anyone standing in green slime. Ride the cheese clock; its sides knock you away. In The Lab, lifts carry you, flashing strips warn of spikes, and the striped wall pushes you toward them. Jump over it or ride its top. Moonlit Dojo has a gently swaying bridge. Arena hazards affect both teams.</p></div>');
+dialog.querySelector('.help-keys')!.insertAdjacentHTML('beforebegin', '<div class="help-rule"><b>06</b><p><strong>Winter mischief.</strong> Snow Fort has slippery ice. The Living Room has walls, a ceiling, bouncy couches, and a damaging fireplace: at 200% damage, you lose a life. Bosses still use HP. Santa?s Workshop has conveyor belts and falling solid presents. Snowman takes extra damage from fireballs, nacho cheese, and the fireplace.</p></div><div class="help-rule"><b>07</b><p><strong>Mystery power-ups.</strong> Question-mark pickups appear in every arena. They can raise or lower strength, speed, or defense for 8 seconds, heal 25 damage, or add 25 damage. Matching effects refresh; opposite effects replace each other. Santa?s Self gift always grants a beneficial effect. All effects clear when you lose a life.</p></div>');
+
 dialog.querySelector('.boss-instructions p')!.append(' Unlocks are saved in this browser at this game address.');
 let previousPhase: MatchPhase | '' = '';
 let previousMode: GameMode | '' = '';
@@ -164,6 +167,10 @@ function updateSelection() {
     button.setAttribute('aria-pressed', String(button.dataset.mode === match.mode));
   });
   get('boss-ladder').hidden = match.mode !== 'boss';
+  document.querySelectorAll<HTMLElement>('[data-ladder-progress]').forEach(label => {
+    const ladderBosses = bosses.filter(boss => (boss.boss?.ladder ?? 'classic') === label.dataset.ladderProgress);
+    label.textContent = `${ladderBosses.filter(boss => progression.hasDefeated(boss.id)).length} / ${ladderBosses.length} defeated`;
+  });
   get('ladder-progress').textContent = `${bosses.filter(boss => progression.hasDefeated(boss.id)).length} / ${bosses.length} defeated`;
   document.querySelectorAll<HTMLButtonElement>('[data-boss], [data-challenge]').forEach(button => {
     const boss = bosses.find(b => b.id === (button.dataset.boss ?? button.dataset.challenge))!;
@@ -206,12 +213,15 @@ function refresh() {
     get('boss-status').textContent = `${match.bossEnraged && boss.health > 0 ? 'ENRAGED · ' : ''}${Math.ceil(boss.health)} / ${boss.maxHealth} HP`;
     const ultraTip = boss.character.ultra.kind === 'heal' ? 'Healing windup! Keep the pressure on.'
       : boss.character.ultra.kind === 'hover' ? 'Flight boots! Robot can fly and fire lasers.'
+      : boss.character.ultra.kind === 'self-gift' ? 'Santa is giving himself a beneficial power-up!'
+      : boss.character.ultra.kind === 'ornament-throw' ? 'Watch for ornaments and flying shards!'
+      : boss.character.ultra.kind === 'blizzard' ? 'Leave the blue warning area before the snow falls!'
       : boss.character.ultra.kind === 'invisibility' ? 'Ninja is entering Shadow Form. His next attack will reveal him!' : 'Move away from the marked area.';
     get('boss-tip').textContent = boss.health === 0 ? `${boss.character.name} is defeated!` : boss.respawn > 0 ? `${boss.character.name} fell! −70 HP. Coming back…`
       : boss.shadowForm ? 'Ninja is translucent and cannot be hit until he starts his next attack!'
       : boss.attack?.ultra ? `${boss.character.ultra.name.toUpperCase()}! ${ultraTip}`
       : boss.attack ? `${boss.character.attack.name.toUpperCase()}! ${boss.character.attack.kind === 'projectile' ? 'Jump out of the firing line.' : 'Jump or back away.'}`
-      : match.fighters.some(f => f.player !== 2 && f.slowed > 0) ? 'Slowed! Dodge blobs and jump clear of slime puddles.'
+      : match.fighters.some(f => f.player !== 2 && f.slowed > 0) ? 'Slowed! Dodge snowballs and blobs; jump clear of slime.'
       : `Drain ${boss.character.name}’s health. Three lives each. Friendly fire is off.`;
   }
   get('match-time').textContent = match.phase === 'lobby' ? match.mode === 'boss' ? 'CO-OP · 2 VS 1' : 'FRIENDLY MATCH' : `${Math.floor(match.elapsed / 60).toString().padStart(2, '0')}:${Math.floor(match.elapsed % 60).toString().padStart(2, '0')}`;
@@ -225,7 +235,7 @@ function refresh() {
   if (match.phase !== previousPhase || match.mode !== previousMode || match.selectedBoss?.id !== previousBoss || match.arena.id !== previousArena) {
     const rewards = progression.recordResult(match, match.boss?.character.id);
     const rewardNames = rewards.map(c => c.name).join(' & ');
-    const next = match.mode === 'boss' && match.winner === 'team' ? progression.nextBoss() : undefined;
+    const next = match.mode === 'boss' && match.winner === 'team' ? progression.nextBoss(match.selectedBoss?.boss?.ladder ?? 'classic') : undefined;
     const nextButton = get<HTMLButtonElement>('next-boss');
     nextButton.hidden = !next;
     nextButton.dataset.next = next?.id ?? '';
@@ -247,6 +257,7 @@ function refresh() {
     get('arena-title').textContent = match.arena.name.toUpperCase();
     document.querySelector('.arena-index')!.textContent = `/ ARENA 0${arenas.indexOf(match.arena) + 1}`;
     get('arena-rules').innerHTML = bossMode ? 'TEAM UP <b>·</b> NO FRIENDLY FIRE <b>·</b> 3 LIVES EACH' : '3 LIVES <b>·</b> DOUBLE JUMP <b>·</b> ULTRA MOVES';
+    if (match.arena.room) get('arena-rules').innerHTML = '200% = LOSE A LIFE <b>?</b> BOUNCY COUCHES <b>?</b> WATCH THE FIRE';
     get('controls-divider').textContent = bossMode ? '+' : 'VS.';
     get('mode-explainer').innerHTML = bossMode ? `Same keyboard. Same team.<br>Beat ${escape(bossName)} before both players lose all lives.` : 'A friendly rivalry.<br>Three lives. Last doodle standing.';
     get('lobby-eyebrow').textContent = bossMode ? 'TWO DOODLES. ONE BIG CHALLENGE.' : 'FROM THE MARGINS TO THE MAIN EVENT';
@@ -263,7 +274,7 @@ function refresh() {
         const draw = match.winner === null;
         get('winner-title').textContent = won ? `You defeated ${bossName}!` : draw ? 'Everybody went down.' : `${bossName} wins this one.`;
         get('winner-label').textContent = won ? next ? 'TEAMWORK TAKES THE PAGE' : 'BOSS LADDER COMPLETE' : draw ? 'A VERY MESSY DRAW' : 'THE BOSS STILL REIGNS';
-        get('winner-detail').textContent = won ? next ? `${next.name} is ready to challenge. Pick your team for the next fight!` : 'All four bosses defeated. Every fighter and arena is yours!' : draw ? `${bossName} is down, but so is the team. Rematch?` : `${Math.ceil(match.boss!.health)} HP left. Watch the attack warnings and try again.`;
+        get('winner-detail').textContent = won ? next ? `${next.name} is ready to challenge. Pick your team for the next fight!` : `You completed the ${match.selectedBoss?.boss?.ladder ?? 'classic'} ladder! Its fighters and arenas are yours. Try the other ladder or replay a favorite.` : draw ? `${bossName} is down, but so is the team. Rematch?` : `${Math.ceil(match.boss!.health)} HP left. Watch the attack warnings and try again.`;
         get('rematch').innerHTML = `${won ? `FACE ${escape(bossName.toUpperCase())} AGAIN` : 'TRY AGAIN TOGETHER'} <span>↗</span>`;
         announcer.textContent = get('winner-title').textContent;
       } else {

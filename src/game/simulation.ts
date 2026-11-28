@@ -1,4 +1,5 @@
-import { emptyInput, type AttackState, type CharacterDefinition, type Fighter, type FighterId, type GameEvent, type GameMode, type Hazard, type InputFrame, type MatchPhase, type MatchWinner, type Platform, type PlayerId, type Projectile } from './types';
+import { emptyInput, type AttackState, type CharacterDefinition, type Fighter, type FighterId, type GameEvent, type GameMode, type Hazard, type InputFrame, type MatchPhase, type MatchWinner, type Platform, type PlayerId, type Projectile, type PowerUpPickup } from './types';
+import { ALL_POWER_UPS, GOOD_POWER_UPS, applyPowerUp, hasPowerUp } from './powerups';
 import { BossBrain } from './boss-ai';
 import { arenas, arenaForBoss, DESK_PLATFORMS, platformsAt, spikeState, type ArenaDefinition, type ArenaId } from './arenas';
 
@@ -17,7 +18,7 @@ function createFighter(character: CharacterDefinition, player: FighterId): Fight
   const boss = player === 2 ? character.boss : undefined;
   return {
     player, character, x: player === 0 ? 430 : 850, y: 524, vx: 0, vy: 0,
-    team: player, size: boss?.scale ?? 1, health: boss?.health ?? 0, maxHealth: boss?.health ?? 0, slowed: 0, hovering: 0, shadowForm: false, arenaHitCooldown: 0,
+    team: player, size: boss?.scale ?? 1, health: boss?.health ?? 0, maxHealth: boss?.health ?? 0, slowed: 0, hovering: 0, shadowForm: false, arenaHitCooldown: 0, powerUps: [],
     facing: player === 0 ? 1 : -1, grounded: true, platform: 0, jumps: 0,
     damage: 0, lives: boss ? 1 : 3, charge: 0, stun: 0, invulnerable: 0, cooldown: 0,
     dropThrough: 0, coyote: 0.09, jumpBuffer: 0, attack: null, respawn: 0, walkTime: 0,
@@ -29,6 +30,9 @@ export class Match {
   fighters: [Fighter, Fighter, ...Fighter[]];
   projectiles: Projectile[] = [];
   hazards: Hazard[] = [];
+  pickups: PowerUpPickup[] = [];
+  private pickupIn = 12;
+  private fragments: Projectile[] = [];
   events: GameEvent[] = [];
   phase: MatchPhase = 'lobby';
   countdown = 3;
@@ -47,7 +51,8 @@ export class Match {
   constructor(first: CharacterDefinition, second: CharacterDefinition, private bossDefinition?: CharacterDefinition,
     private canSelect: (character: CharacterDefinition) => boolean = character => character.playable !== false && !character.unlock,
     private canChallenge: (character: CharacterDefinition) => boolean = character => Boolean(character.boss && !character.boss.requires),
-    private canSelectArena: (arena: ArenaDefinition) => boolean = arena => !arena.boss) {
+    private canSelectArena: (arena: ArenaDefinition) => boolean = arena => !arena.boss,
+    private random: () => number = Math.random) {
     this.fighters = [createFighter(first, 0), createFighter(second, 1)];
   }
 
@@ -121,6 +126,7 @@ export class Match {
     this.resetFighters();
     this.projectiles = [];
     this.hazards = [];
+    this.pickups = []; this.pickupIn = 12; this.fragments = [];
     this.events = [];
     this.countdown = 3;
     this.elapsed = 0;
@@ -132,6 +138,7 @@ export class Match {
     this.phase = 'lobby';
     this.projectiles = [];
     this.hazards = [];
+    this.pickups = []; this.pickupIn = 12; this.fragments = [];
     this.events = [];
     this.winner = null;
     this.elapsed = 0;
@@ -167,14 +174,15 @@ export class Match {
       this.addCharge(boss, (boss.character.boss?.chargePerSecond ?? 14) * (this.bossEnraged ? 1.45 : 1) * dt);
       if (this.bossEnraged && !this.enragedAnnounced) { this.enragedAnnounced = true; this.event('enrage', boss, 2); }
     }
-    const bossInput = boss ? this.brain.step(boss, this.fighters.slice(0, 2), dt, this.platforms) : emptyInput();
+    const bossInput = boss ? this.brain.step(boss, this.fighters.slice(0, 2), dt, this.platforms, this.arena.fire) : emptyInput();
     for (const f of this.fighters) this.move(f, f.player === 2 ? bossInput : inputs[f.player], dt);
     this.updateArenaHazards();
+    this.updatePowerUps(dt);
     for (const f of this.fighters) this.updateAttack(f, dt);
     this.updateProjectiles(dt);
     // Resolve both knockouts before choosing a winner, including simultaneous final stocks.
     for (const f of this.fighters) {
-      if (f.lives > 0 && f.respawn === 0 && (f.x < -110 || f.x > WIDTH + 110 || f.y > HEIGHT + 140 || f.y < -260)) this.knockOut(f);
+      if (f.lives > 0 && f.respawn === 0 && (f.x < -110 || f.x > WIDTH + 110 || f.y > HEIGHT + 140 || f.y < -260 || f.player !== 2 && this.arena.room && f.damage >= this.arena.room.knockoutDamage)) this.knockOut(f);
     }
     const aliveHeroes = this.fighters.slice(0, 2).filter(f => f.lives > 0);
     if (this.mode === 'boss' ? boss!.health <= 0 || aliveHeroes.length === 0 : aliveHeroes.length < 2) {
@@ -201,6 +209,7 @@ export class Match {
       }
       return;
     }
+    f.powerUps = f.powerUps.filter(effect => { effect.remaining -= dt; return effect.remaining > 0; });
     f.stun = Math.max(0, f.stun - dt);
     f.invulnerable = Math.max(0, f.invulnerable - dt);
     f.cooldown = Math.max(0, f.cooldown - dt);
@@ -209,9 +218,10 @@ export class Match {
     f.hovering = Math.max(0, f.hovering - dt);
     f.arenaHitCooldown = Math.max(0, f.arenaHitCooldown - dt);
     // A grounded rider inherits the exact surface displacement before moving independently.
-    const riding = f.grounded ? f.platform : null;
+    let riding = f.grounded ? f.platform : null;
+    if (riding !== null && this.platforms[riding].solid === 'gift' && Math.abs(this.platforms[riding].y - this.previousPlatforms[riding].y) > 150) { riding = null; f.grounded = false; f.platform = null; }
     if (riding !== null) {
-      f.x += this.platforms[riding].x - this.previousPlatforms[riding].x;
+      f.x += this.platforms[riding].x - this.previousPlatforms[riding].x + (this.platforms[riding].conveyor ?? 0) * dt;
       f.y += this.platforms[riding].y - this.previousPlatforms[riding].y;
     }
     f.coyote = f.grounded ? 0.09 : Math.max(0, f.coyote - dt);
@@ -220,8 +230,8 @@ export class Match {
     const direction = Number(input.right) - Number(input.left);
     if (f.stun === 0) {
       const speed = f.character.stats.speed * (f.attack?.ultra && f.character.ultra.kind === 'spin' ? 0.8 : 1)
-        * (f.slowed > 0 ? 0.55 : 1) * (f.player === 2 && this.bossEnraged ? 1.18 : 1);
-      f.vx = approach(f.vx, direction * speed, (f.grounded ? 2400 : direction ? 1250 : 450) * dt);
+        * (hasPowerUp(f, 'speed') ? 1.4 : hasPowerUp(f, 'slow') ? 0.65 : 1) * (f.slowed > 0 ? 0.55 : 1) * (f.player === 2 && this.bossEnraged ? 1.18 : 1);
+      f.vx = approach(f.vx, direction * speed, (f.grounded ? (riding !== null && this.platforms[riding].ice ? direction ? 620 : 180 : 2400) : direction ? 1250 : 450) * dt);
       if (direction && !f.attack) f.facing = direction;
       if (input.down && f.grounded && f.platform !== null && !this.platforms[f.platform].main && !this.platforms[f.platform].solid) {
         f.dropThrough = 0.22;
@@ -279,11 +289,19 @@ export class Match {
           f.platform = p.index;
           f.jumps = 0;
           if (!wasGrounded) this.event('land', f);
+          if (p.bounce && !input.down) { f.vy = -840; f.grounded = false; f.platform = null; f.jumps = 1; f.coyote = 0; }
           break;
         }
       }
     }
     this.resolveSolids(f, lastX, lastY);
+    const room = this.arena.room;
+    if (room) {
+      const radius = BODY_RADIUS * f.size;
+      if (f.x < room.left + radius) { f.x = room.left + radius; f.vx = Math.abs(f.vx) * 0.55; }
+      if (f.x > room.right - radius) { f.x = room.right - radius; f.vx = -Math.abs(f.vx) * 0.55; }
+      if (f.y < room.ceiling + BODY_HEIGHT * f.size) { f.y = room.ceiling + BODY_HEIGHT * f.size; f.vy = Math.max(0, -f.vy * 0.35); }
+    }
     f.walkTime += Math.abs(f.vx) * dt / 37;
   }
 
@@ -295,6 +313,7 @@ export class Match {
       const bottom = p.y + (p.height ?? 24);
       if (f.x + radius <= p.x || f.x - radius >= p.x + p.width || f.y <= p.y || f.y - height >= bottom) return;
       const old = this.previousPlatforms[index];
+      if (p.solid === 'gift' && Math.abs(p.y - old.y) > 150) return;
       if (lastY - height >= old.y + (old.height ?? 24) - 0.1 && f.vy < 0) {
         f.y = bottom + height;
         f.vy = Math.max(0, f.vy);
@@ -313,6 +332,11 @@ export class Match {
   private updateArenaHazards() {
     for (const f of this.fighters) {
       if (!this.canHit(f)) continue;
+      const fire = this.arena.fire;
+      if (fire && f.arenaHitCooldown === 0 && f.x + BODY_RADIUS * f.size > fire.x && f.x - BODY_RADIUS * f.size < fire.x + fire.width && f.y > fire.y - fire.height && f.y - BODY_HEIGHT * f.size < fire.y) {
+        this.hit(f, null, 10, 240, 1.2, Math.sign(f.x - fire.x - fire.width / 2) || 1, true, 'fireball');
+        f.arenaHitCooldown = 0.8;
+      }
       for (const patch of this.arena.slime ?? []) {
         const p = this.platforms[patch.platform];
         if (f.grounded && f.platform === patch.platform && f.x + BODY_RADIUS > p.x + patch.offset && f.x - BODY_RADIUS < p.x + patch.offset + patch.width) {
@@ -363,10 +387,12 @@ export class Match {
       }
     } else {
       const move = f.character.ultra;
-      if (move.kind === 'heal' || move.kind === 'hover' || move.kind === 'invisibility') {
+      if (move.kind === 'heal' || move.kind === 'hover' || move.kind === 'invisibility' || move.kind === 'self-gift') {
         if (a.elapsed >= 0.62 && a.fired === 0) {
           a.fired = 1;
-          if (move.kind === 'heal') {
+          if (move.kind === 'self-gift') {
+            applyPowerUp(f, GOOD_POWER_UPS[this.roll(GOOD_POWER_UPS.length)]);
+          } else if (move.kind === 'heal') {
             if (f.player === 2) f.health = Math.min(f.maxHealth, f.health + (move.healAmount ?? 0));
             else f.damage = Math.max(0, f.damage - (move.healAmount ?? 0));
           } else if (move.kind === 'invisibility') {
@@ -377,6 +403,24 @@ export class Match {
             f.grounded = false; f.platform = null; f.coyote = 0;
             f.jumps = Math.max(1, f.jumps);
           }
+        }
+      } else if (move.kind === 'blizzard') {
+        const shots = a.elapsed < 0.62 ? 0 : Math.min(move.count, Math.floor((a.elapsed - 0.62) / ((move.duration - 0.62) / move.count)) + 1);
+        while (a.fired < shots) {
+          const index = a.fired++;
+          const offset = (((index * 7) % move.count) / Math.max(1, move.count - 1) - 0.5) * move.range;
+          this.projectiles.push({ id: this.projectileId++, owner: f.player, kind: 'snowball',
+            x: clamp(a.targetX + offset, 160, WIDTH - 160), y: 125, vx: a.facing * 85, vy: 470,
+            radius: 13, damage: move.damage, knockback: move.knockback, growth: move.growth,
+            life: 1.5, ultra: true, slowDuration: move.slowDuration ?? 1.2 });
+        }
+      } else if (move.kind === 'ornament-throw') {
+        const shots = a.elapsed < 0.62 ? 0 : Math.min(move.count, Math.floor((a.elapsed - 0.62) / ((move.duration - 0.62) / move.count)) + 1);
+        while (a.fired < shots) {
+          const index = a.fired++;
+          this.spawnProjectile(f, a, 'ornament', 380 + index * 65, 13, 2, true);
+          const p = this.projectiles[this.projectiles.length - 1];
+          p.vy = -290 + index * 35; p.fuse = 0.95; p.explosionRadius = 60; p.variant = index % 3;
         }
       } else if (move.kind === 'glove-throw') {
         if (a.elapsed >= 0.26 && a.fired === 0) {
@@ -461,6 +505,10 @@ export class Match {
       age: 0, returnAfter: kind === 'boomerang' && !ultra ? life : undefined, returning: false, hitTargets: [],
       slowDuration: !ultra ? f.character.attack.slowDuration : undefined,
     });
+    if (kind === 'present') {
+      const p = this.projectiles[this.projectiles.length - 1];
+      p.vy = -160; p.fuse = 0.85; p.explosionRadius = 75;
+    }
   }
 
   private updateProjectiles(dt: number) {
@@ -483,10 +531,18 @@ export class Match {
       const previousX = p.x;
       const previousY = p.y;
       if (p.kind === 'slime') p.vy += 950 * dt;
+      if (p.kind === 'present' || p.kind === 'ornament') p.vy += 700 * dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
       p.life -= dt;
       if (p.fuse !== undefined && p.age >= p.fuse) { this.explode(p); return false; }
+      if ((p.kind === 'present' || p.kind === 'ornament') && p.vy > 0 && this.platforms.some(surface => previousY + p.radius <= surface.y && p.y + p.radius >= surface.y && p.x > surface.x && p.x < surface.x + surface.width)) {
+        this.explode(p); return false;
+      }
+      if (this.platforms.some(surface => surface.solid === 'gift' && segmentHitsBox(previousX, previousY, p.x, p.y, surface.x - p.radius, surface.y - p.radius, surface.x + surface.width + p.radius, surface.y + (surface.height ?? 54) + p.radius))) {
+        if (p.explosionRadius) this.explode(p);
+        return false;
+      }
       for (const other of this.enemies(owner)) {
         if (!this.canHit(other) || p.hitTargets?.includes(other.player)) continue;
         // Swept segment against an expanded fighter box prevents fast arrows tunneling.
@@ -494,7 +550,7 @@ export class Match {
           other.x - BODY_RADIUS * other.size - p.radius, other.y - BODY_HEIGHT * other.size - p.radius,
           other.x + BODY_RADIUS * other.size + p.radius, other.y + p.radius)) {
           if (p.explosionRadius !== undefined) { this.explode(p); return false; }
-          this.hit(other, owner, p.damage, p.knockback, p.growth, Math.sign(p.vx) || Math.sign(other.x - owner.x) || 1, p.ultra);
+          this.hit(other, owner, p.damage, p.knockback, p.growth, Math.sign(p.vx) || Math.sign(other.x - owner.x) || 1, p.ultra, p.kind);
           if (p.slowDuration) other.slowed = Math.max(other.slowed, p.slowDuration);
           if (p.kind === 'boomerang') { (p.hitTargets ??= []).push(other.player); continue; }
           return false;
@@ -502,6 +558,7 @@ export class Match {
       }
       return p.life > 0 && p.x > -160 && p.x < WIDTH + 160 && p.y < HEIGHT + 100;
     });
+    this.projectiles.push(...this.fragments); this.fragments = [];
   }
 
   private quake(f: Fighter) {
@@ -523,7 +580,7 @@ export class Match {
       const nearestX = clamp(p.x, target.x - BODY_RADIUS * target.size, target.x + BODY_RADIUS * target.size);
       const nearestY = clamp(p.y, target.y - BODY_HEIGHT * target.size, target.y);
       if (Math.hypot(nearestX - p.x, nearestY - p.y) > radius) continue;
-      this.hit(target, owner, p.damage, p.knockback, p.growth, Math.sign(target.x - p.x) || Math.sign(p.vx) || 1, true);
+      this.hit(target, owner, p.damage, p.knockback, p.growth, Math.sign(target.x - p.x) || Math.sign(p.vx) || 1, p.ultra, p.kind);
       if (p.kind === 'slime') target.slowed = Math.max(target.slowed, p.slowDuration ?? 2);
     }
     this.hazards.push({ id: this.projectileId++, owner: p.owner, kind: 'explosion', x: p.x, y: p.y, radius, life: 0.4, total: 0.4 });
@@ -536,6 +593,12 @@ export class Match {
         const duration = p.puddleDuration ?? 4;
         this.hazards.push({ id: this.projectileId++, owner: p.owner, kind: 'slime', x: (left + right) / 2, y: ground.y, radius: (right - left) / 2, life: duration, total: duration, platform: this.platforms.indexOf(ground), offsetX: (left + right) / 2 - ground.x });
       }
+    }
+    if (p.kind === 'ornament') for (let i = 0; i < 5; i++) {
+      const angle = -Math.PI + i * Math.PI / 4;
+      this.fragments.push({ id: this.projectileId++, owner: p.owner, kind: 'needle', x: p.x, y: p.y,
+        vx: Math.cos(angle) * 330, vy: Math.sin(angle) * 330, radius: 7, damage: 5, knockback: 160, growth: 1,
+        life: 0.55, ultra: true, variant: i % 2 + 1 });
     }
     this.events.push({ type: 'explosion', x: p.x, y: p.y, player: p.owner, intensity: 2 });
   }
@@ -552,13 +615,42 @@ export class Match {
     }
   }
 
+  private roll(count: number): number { return Math.min(count - 1, Math.max(0, Math.floor(this.random() * count))); }
+
+  private updatePowerUps(dt: number) {
+    this.pickupIn -= dt;
+    if (this.pickupIn <= 0) {
+      this.pickupIn = 12 + this.roll(7);
+      const surfaces = this.platforms.map((p, index) => ({ p, index })).filter(({ p }) => !p.solid && !p.bounce);
+      if (surfaces.length && this.pickups.length < 2) {
+        const { p, index } = surfaces[this.roll(surfaces.length)];
+        this.pickups.push({ id: this.projectileId++, kind: ALL_POWER_UPS[this.roll(ALL_POWER_UPS.length)],
+          platform: index, offset: 30 + this.random() * Math.max(0, p.width - 60), life: 10 });
+      }
+    }
+    this.pickups = this.pickups.filter(item => {
+      item.life -= dt;
+      if (item.life <= 0) return false;
+      const platform = this.platforms[item.platform];
+      const x = platform.x + item.offset, y = platform.y - 24;
+      const taker = this.fighters.filter(f => this.canHit(f) && Math.abs(f.x - x) < 30 * f.size && y >= f.y - BODY_HEIGHT * f.size - 16 && y <= f.y + 16)
+        .sort((a, b) => Math.abs(a.x - x) - Math.abs(b.x - x))[0];
+      if (!taker) return true;
+      applyPowerUp(taker, item.kind);
+      return false;
+    });
+  }
+
   private canHit(f: Fighter) { return f.lives > 0 && f.respawn === 0 && f.invulnerable === 0 && !f.shadowForm; }
 
   private addCharge(f: Fighter, amount: number) {
     f.charge = Math.min(100, f.charge + amount * (f.character.ultra.chargeMultiplier ?? 1));
   }
 
-  private hit(target: Fighter, attacker: Fighter | null, damage: number, base: number, growth: number, direction: number, ultra: boolean) {
+  private hit(target: Fighter, attacker: Fighter | null, damage: number, base: number, growth: number, direction: number, ultra: boolean, element?: Projectile['kind']) {
+    damage *= attacker && hasPowerUp(attacker, 'strength') ? 1.35 : attacker && hasPowerUp(attacker, 'weakness') ? 0.7 : 1;
+    damage *= hasPowerUp(target, 'defense') ? 0.65 : hasPowerUp(target, 'fragile') ? 1.35 : 1;
+    if (target.character.id === 'snowman' && (element === 'fireball' || element === 'cheese')) damage *= 1.5;
     target.damage = Math.min(999, target.damage + damage);
     const isBoss = target.player === 2;
     if (isBoss) {
@@ -596,6 +688,7 @@ export class Match {
     f.cooldown = 0;
     f.dropThrough = 0;
     f.slowed = 0;
+    f.powerUps = [];
     f.hovering = 0;
     f.shadowForm = false;
     f.arenaHitCooldown = 0;
