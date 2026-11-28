@@ -35,11 +35,23 @@ export class BossBrain {
     const dx = target.x - boss.x;
     const dy = target.y - boss.y;
     const ranged = boss.character.attack.kind === 'projectile';
-    const approachingLedge = target.grounded && !boss.grounded && dy < 20;
+    // Finish the jump onto an opponent's ledge before retreating to ranged spacing.
+    const approachingLedge = target.grounded && !boss.grounded && boss.hovering === 0;
     const spacing = ranged && Math.abs(dy) < 65 && !approachingLedge ? Math.min(260, boss.character.attack.range * 0.45) : 0;
-    let destination = offEdge ? safeFloor.x + safeFloor.width / 2 : Math.max(260, Math.min(1020, target.x - Math.sign(dx || boss.facing) * spacing));
-    // A ranged fighter must not choose the fireplace as its firing position.
-    if (fire && destination > fire.x - 55 && destination < fire.x + fire.width + 55) destination = target.x < fire.x + fire.width / 2 ? fire.x - 65 : fire.x + fire.width + 65;
+    const safePosition = (x: number) => {
+      x = Math.max(260, Math.min(1020, x));
+      // Leave enough space to brake without repeatedly jumping into the fireplace.
+      if (fire && x > fire.x - 85 && x < fire.x + fire.width + 85) return x < fire.x + fire.width / 2 ? fire.x - 95 : fire.x + fire.width + 95;
+      return x;
+    };
+    let destination = offEdge ? safeFloor.x + safeFloor.width / 2 : safePosition(target.x);
+    if (!offEdge && spacing > 0) {
+      // At a wall, switch sides instead of shooting past an overlapping opponent.
+      const positions = [safePosition(target.x - spacing), safePosition(target.x + spacing)]
+        .filter(x => Math.abs(x - target.x) >= Math.min(100, spacing / 2))
+        .sort((a, b) => Math.abs(a - boss.x) - Math.abs(b - boss.x));
+      destination = positions[0] ?? destination;
+    }
     const nearFire = Boolean(fire && boss.y > fire.y - fire.height - 45 && boss.x > fire.x - 60 && boss.x < fire.x + fire.width + 60);
     const gap = destination - boss.x;
     if (Math.abs(gap) > (offEdge || ranged ? 10 : 85)) {

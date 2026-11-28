@@ -232,7 +232,8 @@ export class Match {
       const speed = f.character.stats.speed * (f.attack?.ultra && f.character.ultra.kind === 'spin' ? 0.8 : 1)
         * (hasPowerUp(f, 'speed') ? 1.4 : hasPowerUp(f, 'slow') ? 0.65 : 1) * (f.slowed > 0 ? 0.55 : 1) * (f.player === 2 && this.bossEnraged ? 1.18 : 1);
       f.vx = approach(f.vx, direction * speed, (f.grounded ? (riding !== null && this.platforms[riding].ice ? direction ? 620 : 180 : 2400) : direction ? 1250 : 450) * dt);
-      if (direction && !f.attack) f.facing = direction;
+      // The boss brain aims at its target even while backing away to make room.
+      if (direction && !f.attack && f.player !== 2) f.facing = direction;
       if (input.down && f.grounded && f.platform !== null && !this.platforms[f.platform].main && !this.platforms[f.platform].solid) {
         f.dropThrough = 0.22;
         f.grounded = false;

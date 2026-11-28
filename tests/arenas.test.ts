@@ -9,6 +9,9 @@ const sword = characters[0];
 const daveBoss = bosses.find(b => b.id === 'dave')!;
 const robotBoss = bosses.find(b => b.id === 'robot')!;
 const input = (values: Partial<InputFrame> = {}) => ({ ...emptyInput(), ...values });
+function seededRandom(seed: number) {
+  return () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 0x100000000);
+}
 function tick(m: Match, seconds: number, frames: [InputFrame, InputFrame] = [input(), input()]) {
   for (let i = 0; i < Math.ceil(seconds / STEP); i++) m.step(STEP, frames);
 }
@@ -71,8 +74,9 @@ describe('arena progression and lifecycle', () => {
     m.lobby(); expect(m.selectArena('notebook')).toBe(true);
   });
 
-  it.each(bosses)('$name can fight in its home without getting stuck', boss => {
-    const m = new Match(sword, sword, boss, () => true, () => true);
+  // Pickup outcomes must be reproducible locally and on CI. Exercise multiple sequences.
+  it.each(bosses.flatMap(boss => [1, 42, 2026].map(seed => ({ boss, seed }))))('$boss.name can fight in its home without getting stuck (seed $seed)', ({ boss, seed }) => {
+    const m = new Match(sword, sword, boss, () => true, () => true, () => true, seededRandom(seed));
     m.setMode('boss'); m.start(); tick(m, 3.01);
     for (let i = 0; i < 180 / STEP && m.phase === 'playing'; i++) m.step(STEP);
     expect(m.fighters.every(f => Number.isFinite(f.x) && Number.isFinite(f.y))).toBe(true);
